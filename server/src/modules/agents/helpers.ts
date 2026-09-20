@@ -1,4 +1,4 @@
-import type { Agent, AgentVersion, CiFailOn, Provider, ReviewStrategy } from '@devdigest/shared';
+import type { Agent, AgentSkillLink, AgentVersion, CiFailOn, Provider, ReviewStrategy, SkillType } from '@devdigest/shared';
 import { AgentVersionConfig } from '@devdigest/shared';
 import type { AgentRow, AgentVersionRow } from './repository.js';
 
@@ -9,7 +9,7 @@ import type { AgentRow, AgentVersionRow } from './repository.js';
  */
 
 /** Map a persisted agent row to the public `Agent` DTO. */
-export function toAgentDto(row: AgentRow): Agent {
+export function toAgentDto(row: AgentRow, skillCount = 0): Agent {
   return {
     id: row.id,
     name: row.name,
@@ -20,9 +20,47 @@ export function toAgentDto(row: AgentRow): Agent {
     output_schema: row.outputSchema ?? null,
     enabled: row.enabled,
     version: row.version,
+    skill_count: skillCount,
     strategy: row.strategy as ReviewStrategy,
     ci_fail_on: row.ciFailOn as CiFailOn,
     repo_intel: row.repoIntel,
+  };
+}
+
+/** Dual-gate: inject only when both the library skill and the per-agent link are on. */
+export function enabledSkillBodies(
+  links: Array<{ order: number; enabled: boolean; skill: { enabled: boolean; body: string } }>,
+): string[] {
+  return [...links]
+    .filter((row) => row.skill.enabled && row.enabled)
+    .sort((a, b) => a.order - b.order)
+    .map((row) => row.skill.body);
+}
+
+/** Map a joined agent_skills row to the public GET DTO. Body is never exposed. */
+export function toAgentSkillLink(
+  agentId: string,
+  row: {
+    skill: {
+      id: string;
+      name: string;
+      type: string;
+      description: string;
+      enabled: boolean;
+    };
+    order: number;
+    enabled: boolean;
+  },
+): AgentSkillLink {
+  return {
+    agent_id: agentId,
+    skill_id: row.skill.id,
+    order: row.order,
+    enabled: row.enabled,
+    name: row.skill.name,
+    type: row.skill.type as SkillType,
+    description: row.skill.description,
+    skill_enabled: row.skill.enabled,
   };
 }
 

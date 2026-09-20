@@ -4,6 +4,12 @@ Read before starting work here; append before finishing — see [`engineering-in
 
 ## Pattern
 
+### 2026-09-19 — `MockGitClient.readFile` returns `''` for a missing path, not a throw
+`server/src/adapters/mocks.ts` (`this.opts.files?.[path] ?? ''`). Real `SimpleGitClient.readFile` throws ENOENT. Conventions extract treats thrown reads **and** empty/whitespace as missing (`groundCandidate` + `readCloneText` in `server/src/modules/conventions/{helpers,service}.ts`) — otherwise a hallucinated path can “pass” the snippet gate against `''`. Do not only catch exceptions.
+
+### 2026-09-18 — a Fastify request sent with no body/content-type resolves `req.body` to `null`, not `undefined`
+Hit while tightening `POST /pulls/:id/review`'s body schema from a manual `RunRequest.parse(req.body ?? {})` to a declarative `schema.body`. `RunRequest.optional()` (which only widens to `T | undefined`) still 422'd a genuinely bodiless `app.inject({ method: 'POST', url })` call with `"Expected object, received null"` — confirmed by logging the response body. Fix: use `RunRequest.nullish()` (accepts `null` and `undefined`) for any route whose body is meant to be fully optional (e.g. all-fields-optional trigger routes) — `.optional()` alone will 422 a real no-body request. Regression test: `server/test/reviews.it.test.ts` ("POST /pulls/:id/review with no body at all still validates").
+
 ### 2026-09-16 — a prior "findings intentionally not surfaced on the list" comment was a decision to revisit, not a constraint
 `server/src/modules/pulls/routes.ts`'s `GET /repos/:id/pulls` handler used to skip findings entirely with an inline comment claiming it was intentional ("findings live on the PR detail page"). Needed for the PR-list FINDINGS-column popover: extended the existing `latestReviewByPr` map (already built for the SCORE column) to also keep the review `id`, then one extra `IN (reviewIds)` query against `t.findings`, mapped into the `Finding` shape and attached per-PR. Same pattern as `latestReviewByPr`/`costByPr` above it — one list-sized IN-query, no N+1 — reuse that shape rather than adding a differently-structured findings query. Before assuming a "not surfaced by design" comment is load-bearing, check whether it's actually load-bearing product intent or just a not-yet-done note — this one was the latter.
 
@@ -15,7 +21,19 @@ When a feature looks like it's just never been built (e.g. cost tracking absent 
 
 ## Mistake
 
+### 2026-09-19 — `server/src/db/seed.ts` is three hops from the repo root, not four
+`new URL('../../../../docs/skill-fixtures/happy-path-only.diff', import.meta.url)` from `server/src/db/seed.ts` resolved to `/Users/nata/Documents/neo/DevDigest/docs/...` (parent of the repo) and `pnpm db:seed` threw ENOENT. The file lives at `server/src/db/` → `../../../docs/...` is the monorepo `docs/`. Hermetic tests under `server/test/` correctly use `../../docs/...` — do not copy that URL into seed.
+
+### 2026-09-19 — a JSDoc block cannot contain the characters `*/`
+Hit in `server/src/modules/skills/import.ts` documenting nested zip paths like `skill-name/SKILL.md`. TypeScript treated `*/` inside the comment as the end of the block (TS1160). Describe the layout in words ("one path segment, then SKILL.md") instead of writing that character pair.
+
+### 2026-09-18 — `skills.insert` writes the row then snapshots `skill_versions` outside a transaction
+`server/src/modules/skills/repository.ts` `insert` (`this.db.insert(t.skills)` then `snapshotVersion`) is two statements. If the snapshot fails — hit locally when `skill_versions.note` was missing until `pnpm db:migrate` applied `0014` — the skill row remains and Versions shows only later saves (no v1). Wrap insert+snapshot (and restore's update+snapshot) in `this.db.transaction` like `pulls/repository.ts` `refreshDetail` before relying on v1 existing after every create.
+
 ## Decision
+
+### 2026-09-19 — compose rejects non-accepted ids with `AppError` 400, not `ValidationError`
+`server/src/platform/errors.ts` `ValidationError` is always 422. Spec 04 requires `POST /repos/:id/conventions/skills` to return **400** when any id is missing, other-repo, or not `accepted`. `ConventionsService.compose` throws `new AppError('validation_error', '...', 400)` so the integration assertion stays 400. Do not swap in `ValidationError` for that gate — Fastify would 422 and the proof fails.
 
 ### 2026-09-16 — PR-list COST reverted from "latest batch" to "sum of all completed runs, ever"
 `server/src/modules/pulls/total-cost.ts` (`totalCostByPr`) replaces the 2026-09-14 `latest-batch-cost.ts`/`latestBatchCostByPr` entry below — that design deliberately scoped Cost to only the PR's latest "Run Review" batch, to avoid double-counting spend across re-runs. Re-scoped to a straight `SUM(cost_usd) WHERE status='done'` per PR (no `batch_id` grouping, no `ran_at` ordering needed) because the grading rubric this feature was built against defines the column as "sum of every successful run for the PR," full history, not just the latest batch. Trade-off is real and intentional: re-running a review N times now makes Cost grow unbounded rather than reflect current spend-per-review — if a future request wants "spend on the latest review" back, `latestBatchCostByPr`'s git history (this commit's parent) has the working batch-grouped version to restore, not a redesign from scratch.
@@ -27,6 +45,12 @@ When a feature looks like it's just never been built (e.g. cost tracking absent 
 `server/src/db/schema/runs.ts` (`agentRuns.batchId`, uuid, no FK) + `server/src/modules/reviews/service.ts` (`runReview`, one `randomUUID()` shared across the per-agent `createAgentRun` loop). Needed because the PR-list Cost column sums the *latest review batch's* completed run costs (all agents one "Run Review" click targeted), not just the single most-recent run — the historical `93119a5e` implementation only ever surfaced the single-latest-run cost, so `batch_id` didn't exist before. Aggregation lives in `server/src/modules/pulls/latest-batch-cost.ts` (`latestBatchCostByPr`): newest-first, first-seen batch key per PR wins, only `status='done'` rows in that batch contribute, zero contributing rows → `null` not `0`.
 
 ## Context
+
+### 2026-09-19 — workspace SecretsProvider can supply OpenRouter even when `server/.env` `OPENROUTER_API_KEY` is empty
+`GET /settings/secrets-status` returned `openrouter: true` while `server/.env` had `OPENROUTER_API_KEY=` (length 0). Spec 03 traces were skipped on env emptiness; spec 05 live runs on #902 still called the provider. For studio demos, trust `secrets-status` (and Settings → API keys), not `.env` alone.
+
+### 2026-09-18 — this drizzle-orm version's `numeric()` column always types as `string`, and `text(col, { enum })` adds no DB-level constraint
+Hit while migrating `costUsd` (`runs.ts`/`ci.ts`/`eval.ts`) from `doublePrecision` (float) to `numeric('cost_usd', { precision: 12, scale: 6 })` for money-safety. This drizzle-orm version (0.38, see `node_modules/drizzle-orm/pg-core/columns/numeric.d.ts`) has no `mode: 'number'` option on `numeric()` — the column's JS type is always `string`, both on select and insert. Every read site needs `Number(row.costUsd)` and every write needs `value.toFixed(6)` (not bare `String()`, which can emit exponential notation for very small per-token costs); see `server/src/modules/reviews/repository/run.repo.ts`'s `completeAgentRun`/`listRunsForPull`. Separately: `text('severity', { enum: [...] })` (added to `findings` to match `reviews.kind`'s existing pattern) is TS-level narrowing only — confirmed via `pnpm db:generate` producing zero DDL for it — there is no CHECK constraint or native Postgres enum backing it. If a future task wants real DB-level enforcement, that needs an explicit `CHECK` constraint, not the `{ enum }` column option.
 
 ### 2026-09-14 — the local dev Postgres volume can drift ahead of committed migrations from reverted/forked work
 Discovered while adding `repos.provider` (GitLab support): the docker-compose `devdigest-postgres` volume already had a `provider` column AND a different unique index (`workspace_id, provider, full_name` vs. the committed `workspace_id, full_name`) — 19 rows in `drizzle.__drizzle_migrations` against only 11 committed migration files, plus real leftover `repos` rows (including a `gitlab` one) from GitLab work done before `c6af1e4` ("revert: restore main to the starter state"). `pnpm db:migrate` failed with `column "provider" already exists` because of this drift — it wasn't caused by the current session's schema change. Unlike the git-history case (see Pattern above), this drift is invisible to `git log`/`git diff` — it only shows up by inspecting the live DB (`docker exec devdigest-postgres psql -U devdigest -d devdigest -c '\d <table>'` and the `__drizzle_migrations` count vs. `ls src/db/migrations/*.sql`). Fix: `docker compose down -v && docker compose up -d` then `pnpm db:migrate` from a clean volume — but confirm with the user first, since it destroys whatever is in the local dev DB (per `e2e/README.md`'s own warning against `-v`).

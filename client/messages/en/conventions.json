@@ -5,8 +5,10 @@
     "headingPrefix": "Conventions in ",
     "repoFallback": "repo",
     "subtitle": "Scan the cloned repo to surface house-rules — each backed by evidence you can turn into a Skill.",
+    "scanMeta": "Detected from {count} sample files · last scan {when}",
     "scanning": "Scanning…",
-    "rescan": "Re-scan",
+    "runScan": "Run Scan",
+    "rescan": "ReScan",
     "runExtraction": "Run extraction",
     "extractionFailed": "Extraction failed",
     "loadError": "Could not load conventions.",
@@ -17,10 +19,48 @@
     },
     "candidateCount": "{count, plural, one {# candidate} other {# candidates}} · grounded against sampled files"
   },
+  "toolbar": {
+    "deselectAll": "Deselect all",
+    "acceptedCount": "{selected} of {total} accepted",
+    "createSkill": "Create skill"
+  },
   "card": {
     "confidence": "Confidence",
     "accepted": "Accepted",
     "accepting": "Accepting…",
+    "reject": "Reject",
+    "rejecting": "Rejecting…",
+    "edit": "Edit",
+    "openEvidence": "Open evidence on the code host",
+    "editRule": "Edit rule",
     "acceptAsSkill": "Accept as Skill"
+  },
+  "compose": {
+    "title": "Create skill from conventions",
+    "banner": "Merged from {count} accepted conventions in {repo}. Everything below is editable before you save.",
+    "cancel": "Cancel",
+    "create": "Create skill",
+    "creating": "Creating…",
+    "tokens": "{count} tokens",
+    "unsaved": "unsaved",
+    "enabledHint": "Whether this block is added to agents' prompts.",
+    "agent": "Attach to agent",
+    "agentNone": "None — Skills Lab only",
+    "agentHint": "Optional. The new skill is appended; existing links stay.",
+    "defaultDescription": "{count} house conventions extracted from {repo}",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "type": "Type",
+      "enabled": "Enabled",
+      "body": "Skill body",
+      "descriptionPlaceholder": "House conventions extracted from this repo"
+    },
+    "types": {
+      "rubric": "rubric",
+      "convention": "convention",
+      "security": "security",
+      "custom": "custom"
+    }
   }
 }

@@ -3,7 +3,9 @@
     "crumbLab": "Skills Lab",
     "crumbSkills": "Skills",
     "heading": "Skills",
+    "subtitle": "Reusable markdown instructions that agents can share.",
     "addSkill": "Add Skill",
+    "create": "Create",
     "searchPlaceholder": "Search skills…",
     "loadError": "Could not load skills.",
     "menu": {
@@ -13,13 +15,85 @@
     },
     "empty": {
       "title": "No skills yet",
-      "body": "Import a skill from a file, a URL, or the community catalog.",
-      "cta": "Import from file"
+      "body": "A skill is a reusable markdown instruction. Create one to share it across agents.",
+      "cta": "Create your first skill"
     },
     "selectPrompt": {
       "title": "Select a skill",
       "body": "Pick a skill on the left to preview its body."
     }
+  },
+  "card": {
+    "deleteConfirm": "Delete skill \"{name}\"? This cannot be undone.",
+    "deleteTitle": "Delete skill",
+    "confirm": "Delete",
+    "cancel": "Cancel",
+    "version": "v{version}",
+    "agentCount": "{count, plural, one {# agent} other {# agents}}"
+  },
+  "importModal": {
+    "title": "Import skill",
+    "subtitle": "Preview the extracted SKILL.md. Nothing is saved until you confirm.",
+    "warning": "Once enabled and attached to an agent, this imported text becomes instructions in the review prompt — not inert data. Only confirm skills you trust.",
+    "pickFile": "Choose a .md, .zip, or .skill file",
+    "confirm": "Confirm import",
+    "confirming": "Saving…",
+    "cancel": "Cancel"
+  },
+  "create": {
+    "title": "Create skill",
+    "subtitle": "A skill is markdown configuration only — name, interface, type, and body.",
+    "cancel": "Cancel",
+    "create": "Create skill",
+    "creating": "Creating…",
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "uncovered-branches",
+      "description": "Description",
+      "descriptionPlaceholder": "Flag new production paths that lack an asserting test.",
+      "descriptionHint": "This is the skill interface; write it as a directive.",
+      "type": "Type",
+      "body": "Body (Markdown)",
+      "bodyPlaceholder": "# Rule\nDescribe the instruction the reviewing agent should follow."
+    }
+  },
+  "editor": {
+    "skillFallback": "Skill",
+    "listTitle": "Skills",
+    "add": "Add",
+    "create": "Create",
+    "disabled": "disabled",
+    "unsaved": "Unsaved",
+    "tabs": {
+      "config": "Config",
+      "preview": "Preview",
+      "versions": "Versions"
+    }
+  },
+  "config": {
+    "title": "Configuration",
+    "enabled": "Enabled",
+    "name": "Name",
+    "description": "Description",
+    "descriptionHint": "This is the skill interface; write it as a directive.",
+    "type": "Type",
+    "body": "Body (Markdown)",
+    "bodyHint": "Saving a changed body creates a new immutable version.",
+    "save": "Save skill",
+    "saving": "Saving…",
+    "saved": "Saved (v{version})",
+    "savedToast": "Skill saved (v{version})"
+  },
+  "previewTab": {
+    "title": "Preview",
+    "label": "As the reviewing agent receives it"
+  },
+  "versions": {
+    "title": "Versions",
+    "current": "Current",
+    "diff": "Diff",
+    "restore": "Restore",
+    "restoreConfirm": "Restore v{version}? This copies that body forward as a new version."
   },
   "detail": {
     "crumbSkill": "Skill",
@@ -84,6 +158,7 @@
       "manual": "Manual",
       "extracted": "Extracted",
       "community": "Community",
+      "imported": "Imported file",
       "imported_url": "Imported"
     }
   },

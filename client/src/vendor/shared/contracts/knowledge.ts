@@ -115,21 +115,39 @@ export type MemoryItem = z.infer<typeof MemoryItem>;
 export const SkillType = z.enum(['rubric', 'convention', 'security', 'custom']);
 export type SkillType = z.infer<typeof SkillType>;
 
-export const SkillSource = z.enum(['manual', 'imported_url', 'extracted', 'community']);
+export const SkillSource = z.enum(['manual', 'imported', 'imported_url', 'extracted', 'community']);
 export type SkillSource = z.infer<typeof SkillSource>;
+
+/** Extracted SKILL.md core before persist. Description may be empty until confirm. */
+export const SkillImportPreview = z.object({
+  name: z.string(),
+  description: z.string(),
+  body: z.string().min(1),
+});
+export type SkillImportPreview = z.infer<typeof SkillImportPreview>;
 
 export const Skill = z.object({
   id: z.string(),
-  name: z.string(),
-  description: z.string(),
+  name: z.string().min(1),
+  description: z.string().min(1),
   type: SkillType,
   source: SkillSource,
-  body: z.string(),
+  body: z.string().min(1),
   enabled: z.boolean(),
   version: z.number().int(),
+  agent_count: z.number().int().nonnegative().optional(),
   evidence_files: z.array(z.string()).nullish(),
 });
 export type Skill = z.infer<typeof Skill>;
+
+export const SkillVersion = z.object({
+  skill_id: z.string(),
+  version: z.number().int(),
+  body: z.string().min(1),
+  note: z.string().nullish(),
+  created_at: z.string(),
+});
+export type SkillVersion = z.infer<typeof SkillVersion>;
 
 export const CommunitySkill = z.object({
   name: z.string(),
@@ -141,15 +159,64 @@ export const CommunitySkill = z.object({
 export type CommunitySkill = z.infer<typeof CommunitySkill>;
 
 // ---- Conventions ----
+export const ConventionStatus = z.enum(['pending', 'accepted', 'rejected']);
+export type ConventionStatus = z.infer<typeof ConventionStatus>;
+
 export const ConventionCandidate = z.object({
   id: z.string(),
   rule: z.string(),
   evidence_path: z.string(),
   evidence_snippet: z.string(),
   confidence: z.number().min(0).max(1),
+  status: ConventionStatus,
+  category: z.string().nullish(),
+  evidence_start_line: z.number().int().nullable(),
+  evidence_end_line: z.number().int().nullable(),
+  /** True iff `status === 'accepted'`. Kept in sync by the mapper. */
   accepted: z.boolean(),
 });
 export type ConventionCandidate = z.infer<typeof ConventionCandidate>;
+
+export const ConventionList = z.object({
+  items: z.array(ConventionCandidate),
+  extracted_at: z.string().nullable(),
+  sample_file_count: z.number().int().nonnegative(),
+});
+export type ConventionList = z.infer<typeof ConventionList>;
+
+export const ConventionPatch = z.object({
+  status: ConventionStatus.optional(),
+  rule: z.string().min(1).optional(),
+});
+export type ConventionPatch = z.infer<typeof ConventionPatch>;
+
+export const ConventionCompose = z.object({
+  convention_ids: z.array(z.string().uuid()).min(1),
+  name: z.string().min(1),
+  description: z.string().min(1),
+  type: SkillType,
+  body: z.string().min(1),
+  enabled: z.boolean().optional(),
+  agent_id: z.string().uuid().nullish(),
+});
+export type ConventionCompose = z.infer<typeof ConventionCompose>;
+
+/** Structured LLM extraction payload (not a persisted DTO). */
+export const ConventionExtractionItem = z.object({
+  category: z.string(),
+  rule: z.string().min(1),
+  evidence_path: z.string().min(1),
+  evidence_start_line: z.number().int().positive(),
+  evidence_end_line: z.number().int().positive(),
+  evidence_snippet: z.string().min(1),
+  confidence: z.number().min(0).max(1),
+});
+export type ConventionExtractionItem = z.infer<typeof ConventionExtractionItem>;
+
+export const ConventionExtraction = z.object({
+  candidates: z.array(ConventionExtractionItem),
+});
+export type ConventionExtraction = z.infer<typeof ConventionExtraction>;
 
 // ---- Agents ----
 export const Provider = z.enum(['openai', 'anthropic', 'openrouter']);
@@ -177,6 +244,7 @@ export const Agent = z.object({
   output_schema: z.unknown().nullish(),
   enabled: z.boolean(),
   version: z.number().int(),
+  skill_count: z.number().int().nonnegative().optional(),
   strategy: ReviewStrategy.default('single-pass'),
   ci_fail_on: CiFailOn.default('critical'),
   // Inject repo-intel context (repo skeleton + callers + rank note) into this
@@ -189,5 +257,10 @@ export const AgentSkillLink = z.object({
   agent_id: z.string(),
   skill_id: z.string(),
   order: z.number().int(),
+  enabled: z.boolean(),
+  name: z.string(),
+  type: SkillType,
+  description: z.string(),
+  skill_enabled: z.boolean(),
 });
 export type AgentSkillLink = z.infer<typeof AgentSkillLink>;

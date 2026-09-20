@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { readFileSync } from 'node:fs';
 import { createDb, type Db } from './client.js';
 import * as t from './schema.js';
 import { eq, and } from 'drizzle-orm';
@@ -6,11 +7,45 @@ import {
   GENERAL_REVIEWER_PROMPT,
   SECURITY_REVIEWER_PROMPT,
   PERFORMANCE_REVIEWER_PROMPT,
+  TEST_QUALITY_REVIEWER_PROMPT,
+  API_CONTRACT_REVIEWER_PROMPT,
 } from './seed-prompts.js';
+import { seedSkills } from './seed-skills.js';
 
 /** Default provider/model for the built-in reviewer agents. */
-const DEFAULT_PROVIDER = 'openrouter' as const;
-const DEFAULT_MODEL = 'deepseek/deepseek-v4-flash';
+export const DEFAULT_PROVIDER = 'openrouter' as const;
+export const DEFAULT_MODEL = 'deepseek/deepseek-v4-flash';
+
+const HAPPY_PATH_DIFF = new URL('../../../docs/skill-fixtures/happy-path-only.diff', import.meta.url);
+const BREAKING_RENAME_DIFF = new URL(
+  '../../../docs/skill-fixtures/breaking-response-rename.diff',
+  import.meta.url,
+);
+
+function filesFromUnifiedDiff(text: string): Array<{
+  path: string;
+  patch: string;
+  additions: number;
+  deletions: number;
+}> {
+  const out: Array<{ path: string; patch: string; additions: number; deletions: number }> = [];
+  for (const part of text.split(/^diff --git /m).filter(Boolean)) {
+    const header = part.match(/^a\/(\S+) b\/(\S+)/);
+    const path = header?.[2];
+    if (!path) continue;
+    const hunkAt = part.indexOf('\n@@');
+    const patch = hunkAt >= 0 ? part.slice(hunkAt + 1).replace(/\s+$/, '') + '\n' : '';
+    let additions = 0;
+    let deletions = 0;
+    for (const line of patch.split('\n')) {
+      if (line.startsWith('+++') || line.startsWith('---') || line.startsWith('@@')) continue;
+      if (line.startsWith('+')) additions += 1;
+      else if (line.startsWith('-')) deletions += 1;
+    }
+    out.push({ path, patch, additions, deletions });
+  }
+  return out;
+}
 
 /**
  * Seed the starter's demo data. Idempotent: re-running upserts the default
@@ -18,11 +53,11 @@ const DEFAULT_MODEL = 'deepseek/deepseek-v4-flash';
  *
  * Seeds: default workspace + system user + membership, default settings,
  * demo repo (acme/payments-api), PR #482 with files/commits, a sample review
- * with a few findings, and the three built-in agents (General + Security +
- * Performance), all on the default openrouter/deepseek-v4-flash provider+model.
- *
- * Course lessons populate the other tables (skills, conventions, memory, eval,
- * …) once their features are built — they start empty here.
+ * with a few findings, control PRs #901 (happy-path tests) and #902 (silent
+ * public-field rename), and the built-in agents (General + Security +
+ * Performance + Test Quality + API Contract), all on the default
+ * openrouter/deepseek-v4-flash provider+model, plus the mockup skill catalog
+ * and agent_skills links.
  */
 
 export const DEFAULT_WORKSPACE_NAME = 'default';
@@ -175,7 +210,83 @@ export async function seed(db: Db): Promise<{ workspaceId: string; userId: strin
     ]);
   }
 
-  // ---- built-in agents (the three starter presets) ----
+  // ---- PR #901 (happy-path-only tests — control experiment) ----
+  let [pr901] = await db
+    .select()
+    .from(t.pullRequests)
+    .where(and(eq(t.pullRequests.repoId, repoId), eq(t.pullRequests.number, 901)));
+  if (!pr901) {
+    const files = filesFromUnifiedDiff(readFileSync(HAPPY_PATH_DIFF, 'utf8'));
+    const additions = files.reduce((n, f) => n + f.additions, 0);
+    const deletions = files.reduce((n, f) => n + f.deletions, 0);
+    [pr901] = await db
+      .insert(t.pullRequests)
+      .values({
+        workspaceId,
+        repoId,
+        number: 901,
+        title: 'Add parseAmount helper with happy-path-only tests',
+        author: 'seed',
+        branch: 'test/happy-path-only',
+        base: 'main',
+        headSha: 'c0ntr0l901',
+        additions,
+        deletions,
+        filesCount: files.length,
+        status: 'needs_review',
+        body: 'Tests cover the successful parse only. Empty input, NaN, and negative branches have no assertions.',
+      })
+      .returning();
+    if (files.length > 0) {
+      await db.insert(t.prFiles).values(files.map((f) => ({ prId: pr901!.id, ...f })));
+    }
+    await db.insert(t.prCommits).values({
+      prId: pr901!.id,
+      sha: 'c0ntr0l901',
+      message: 'Add parseAmount with a happy-path-only test',
+      author: 'seed',
+    });
+  }
+
+  // ---- PR #902 (silent public payload rename — API Contract control) ----
+  let [pr902] = await db
+    .select()
+    .from(t.pullRequests)
+    .where(and(eq(t.pullRequests.repoId, repoId), eq(t.pullRequests.number, 902)));
+  if (!pr902) {
+    const files = filesFromUnifiedDiff(readFileSync(BREAKING_RENAME_DIFF, 'utf8'));
+    const additions = files.reduce((n, f) => n + f.additions, 0);
+    const deletions = files.reduce((n, f) => n + f.deletions, 0);
+    [pr902] = await db
+      .insert(t.pullRequests)
+      .values({
+        workspaceId,
+        repoId,
+        number: 902,
+        title: 'Rename userId to user_id in the public user payload',
+        author: 'seed',
+        branch: 'breaking/rename-userid',
+        base: 'main',
+        headSha: 'c0ntr0l902',
+        additions,
+        deletions,
+        filesCount: files.length,
+        status: 'needs_review',
+        body: 'Breaking rename of a public JSON field. No deprecation marker and no major version bump.',
+      })
+      .returning();
+    if (files.length > 0) {
+      await db.insert(t.prFiles).values(files.map((f) => ({ prId: pr902!.id, ...f })));
+    }
+    await db.insert(t.prCommits).values({
+      prId: pr902!.id,
+      sha: 'c0ntr0l902',
+      message: 'Rename userId to user_id in public user payload',
+      author: 'seed',
+    });
+  }
+
+  // ---- built-in agents (starter presets + lab reviewers) ----
   // Prompt bodies live in ./seed-prompts.ts (mirrored in docs/agent-prompts/*.md).
   const seedAgents: Array<typeof t.agents.$inferInsert> = [
     {
@@ -211,6 +322,29 @@ export async function seed(db: Db): Promise<{ workspaceId: string; userId: strin
       version: 1,
       createdBy: userId,
     },
+    {
+      workspaceId,
+      name: 'Test Quality Reviewer',
+      description: 'Flags weak tests: uncovered branches, missing corners, heavy mocks, flakes.',
+      provider: DEFAULT_PROVIDER,
+      model: DEFAULT_MODEL,
+      systemPrompt: TEST_QUALITY_REVIEWER_PROMPT,
+      enabled: true,
+      version: 1,
+      createdBy: userId,
+    },
+    {
+      workspaceId,
+      name: 'API Contract Reviewer',
+      description:
+        'Flags public-contract breaks: renamed or removed fields and routes, shape drift, missing major, silent deletion.',
+      provider: DEFAULT_PROVIDER,
+      model: DEFAULT_MODEL,
+      systemPrompt: API_CONTRACT_REVIEWER_PROMPT,
+      enabled: true,
+      version: 1,
+      createdBy: userId,
+    },
   ];
   for (const a of seedAgents) {
     const [existing] = await db
@@ -219,6 +353,8 @@ export async function seed(db: Db): Promise<{ workspaceId: string; userId: strin
       .where(and(eq(t.agents.workspaceId, workspaceId), eq(t.agents.name, a.name)));
     if (!existing) await db.insert(t.agents).values(a);
   }
+
+  await seedSkills(db, workspaceId);
 
   return { workspaceId, userId };
 }
