@@ -4,6 +4,12 @@ Read before starting work here; append before finishing — see [`engineering-in
 
 ## Pattern
 
+### 2026-09-21 — best-effort pre-work (Intent Layer) is only unit-testable if the try/catch is its own exported function
+`server/src/modules/reviews/intent-loader.ts` (`deriveIntentBlock`) wraps `runLog.step('Deriving PR intent', () => loadIntent(...))` in a try/catch that swallows any failure (classifier error, provider ConfigError) and returns `undefined` instead of failing the queued runs — mirroring `run-executor.ts`'s existing best-effort enrichments (`buildCallersDigest`/`buildRepoMapDigest`). Originally this try/catch was inlined directly in `ReviewRunExecutor.executeRuns`; extracting it to its own exported `deriveIntentBlock(container, repo, ...)` made the "a classifier failure never fails the run" contract hermetically testable (`server/test/reviews-intent.test.ts`) with a fake `Container`/`ReviewRepository` and no Postgres/`agent_runs` writes — testing it in place would have required a full `executeRuns` run (real DB rows for `agent_runs`/`run_traces`), pushing the test into `.it.test.ts` territory for what's actually pure control-flow. When a new best-effort pre-work step's failure-handling needs a unit test, extract the try/catch to a named function first rather than inlining it in the run loop.
+
+### 2026-09-21 — a Zod schema's strict `json_schema` requirement is enforceable for free via `MockLLMProvider`
+`server/src/adapters/mocks.ts`'s `MockLLMProvider.completeStructured` runs the caller-supplied fixture through `schema.safeParse` and throws `MockLLMProvider fixture failed schema` on mismatch. This means a fixture just missing one required field (e.g. `IntentDraft.confidence`, added for the Intent Layer classifier) is enough to hermetically simulate "the classifier call failed" — no need for a dedicated throwing stub `LLMProvider` when the goal is "any completeStructured failure", only when the test cares about the *specific* thrown message/type.
+
 ### 2026-09-19 — `MockGitClient.readFile` returns `''` for a missing path, not a throw
 `server/src/adapters/mocks.ts` (`this.opts.files?.[path] ?? ''`). Real `SimpleGitClient.readFile` throws ENOENT. Conventions extract treats thrown reads **and** empty/whitespace as missing (`groundCandidate` + `readCloneText` in `server/src/modules/conventions/{helpers,service}.ts`) — otherwise a hallucinated path can “pass” the snippet gate against `''`. Do not only catch exceptions.
 

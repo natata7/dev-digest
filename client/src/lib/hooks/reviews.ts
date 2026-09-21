@@ -4,10 +4,11 @@
 
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, API_BASE } from "../api";
+import { api, API_BASE, ApiError } from "../api";
 import { notify } from "../toast";
 import type {
   FindingActionKind,
+  PrIntentRecord,
   PrReviewComment,
   ReviewRecord,
   ReviewRunResponse,
@@ -213,4 +214,32 @@ export function useRunEvents(runIds: string[]) {
   }, [key]);
 
   return { events, running };
+}
+
+// ---- Intent Layer: the PR's persisted Intent (title/description/linked
+// issue/spec/files → why this PR exists, before review) ----
+
+/** The persisted Intent for a PR, or `null` if never computed (404). */
+export function usePrIntent(prId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["pr-intent", prId],
+    queryFn: async () => {
+      try {
+        return await api.get<PrIntentRecord>(`/pulls/${prId}/intent`);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null;
+        throw e;
+      }
+    },
+    enabled: !!prId,
+  });
+}
+
+/** Force-recompute the Intent (e.g. the "PR updated" banner's Recompute button). */
+export function useRecomputeIntent(prId: string | null | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<PrIntentRecord>(`/pulls/${prId}/intent`),
+    onSuccess: (data) => qc.setQueryData(["pr-intent", prId], data),
+  });
 }

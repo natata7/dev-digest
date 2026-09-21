@@ -2,7 +2,7 @@
  * Pure helpers for the review service (side-effect free; operate purely on
  * their arguments — no DB / network / `this`).
  */
-import type { Finding } from '@devdigest/shared';
+import type { Finding, PromptAssembly } from '@devdigest/shared';
 import type { FindingRow, PullRow, ReviewRow } from './repository.js';
 
 // reduceReviews + sliceDiff live in @devdigest/reviewer-core (pure engine logic
@@ -82,6 +82,56 @@ export function reviewToDto(
 /** Spread onto `reviewPullRequest` so an empty list cannot become `skills: []`. */
 export function skillsPromptArg(bodies: string[]): { skills: string[] } | Record<string, never> {
   return bodies.length > 0 ? { skills: bodies } : {};
+}
+
+/** Human-readable origin for each named prompt-assembly section — labels only,
+ *  for observability; never the section's own text. */
+const SECTION_SOURCE: Record<string, string> = {
+  system: 'agent system prompt',
+  pr_description: 'PR title/body',
+  intent: 'Intent Layer classifier',
+  skills: 'linked skills',
+  memory: 'memory retrieval',
+  specs: 'Project Context',
+  repo_map: 'repo-intel',
+  callers: 'repo-intel',
+  diff: 'git diff',
+};
+
+export interface PromptSectionMeta {
+  name: string;
+  source: string;
+  chars: number;
+}
+
+/**
+ * Per-section character counts for an assembled prompt — safe to log: only
+ * names, origins, and lengths, never the section's own text (which may hold
+ * PR description/spec/diff content). Sections absent/empty are omitted, so
+ * the shape mirrors exactly what actually rendered.
+ *
+ * `diffChars` is passed separately because `PromptAssembly` doesn't carry the
+ * diff text on its own — it's embedded inside the concatenated `user` field.
+ */
+export function describePromptSections(
+  assembly: PromptAssembly,
+  diffChars: number,
+): PromptSectionMeta[] {
+  const named: [string, string | null | undefined][] = [
+    ['system', assembly.system],
+    ['pr_description', assembly.pr_description],
+    ['intent', assembly.intent],
+    ['skills', assembly.skills],
+    ['memory', assembly.memory],
+    ['specs', assembly.specs],
+    ['repo_map', assembly.repo_map],
+    ['callers', assembly.callers],
+  ];
+  const out: PromptSectionMeta[] = named
+    .filter((entry): entry is [string, string] => !!entry[1] && entry[1].length > 0)
+    .map(([name, text]) => ({ name, source: SECTION_SOURCE[name] ?? name, chars: text.length }));
+  out.push({ name: 'diff', source: SECTION_SOURCE.diff!, chars: diffChars });
+  return out;
 }
 
 export function taskLine(pull: PullRow): string {

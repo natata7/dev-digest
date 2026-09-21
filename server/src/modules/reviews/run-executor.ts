@@ -6,8 +6,9 @@ import type { AgentRow } from '../../db/rows.js';
 import type { ReviewRepository, FindingRow, PullRow, ReviewRow, RepoRow } from './repository.js';
 import { REVIEW_STRATEGY } from './constants.js';
 import { enabledSkillBodies } from '../agents/helpers.js';
-import { skillsPromptArg, taskLine } from './helpers.js';
+import { describePromptSections, skillsPromptArg, taskLine } from './helpers.js';
 import { loadDiff } from './diff-loader.js';
+import { deriveIntentBlock } from './intent-loader.js';
 
 /** Thrown by a run when the user cancels it mid-flight (between map files). */
 export class RunCancelledError extends Error {
@@ -105,6 +106,10 @@ export class ReviewRunExecutor {
     }
     runLog.info(`Diff ready — ${diff.files.length} changed file(s); starting ${jobs.length} agent run(s)`);
 
+    // Intent Layer — shared pre-work, best-effort (see deriveIntentBlock):
+    // unlike the diff, a failed classification does NOT fail the queued runs.
+    const intentBlock = await deriveIntentBlock(this.container, this.repo, workspaceId, pull, repo, diff, runLog);
+
     for (const { agent, runId } of jobs) {
       const agentStart = Date.now();
       logger?.info(
@@ -112,7 +117,7 @@ export class ReviewRunExecutor {
         `review: agent "${agent.name}" started (${agent.provider}/${agent.model})`,
       );
       try {
-        const outcome = await this.runOneAgent(workspaceId, pull, repo, diff, agent, runId, runLog);
+        const outcome = await this.runOneAgent(workspaceId, pull, repo, diff, intentBlock, agent, runId, runLog);
         logger?.info(
           {
             runId,
@@ -141,6 +146,7 @@ export class ReviewRunExecutor {
     pull: PullRow,
     repo: RepoRow,
     diff: UnifiedDiff,
+    intentBlock: string | undefined,
     agent: AgentRow,
     runId: string,
     parentLog: RunLogger,
@@ -211,6 +217,9 @@ export class ReviewRunExecutor {
         // PR author's description/body — untrusted; assemblePrompt wraps +
         // truncates it. Omitted when the PR has no body.
         ...(pull.body ? { prDescription: pull.body } : {}),
+        // Intent Layer — omitted (undefined) when derivation failed; identical
+        // prompt shape to before the feature existed.
+        ...(intentBlock ? { intent: intentBlock } : {}),
         task,
         sessionId: `${repo.owner}/${repo.name}#${pull.number}:${agent.name}`,
         onEvent: (e) => runLog.event(e.kind, e.msg, e.data),
@@ -219,6 +228,31 @@ export class ReviewRunExecutor {
         },
       });
       const { tokensIn, tokensOut, costUsd, grounding } = outcome;
+
+      // Structured, safe observability for the assembled prompt: names/origins/
+      // char counts per section + the real provider/model/token usage from this
+      // call — never the section text itself (no diff body, no spec/PR content,
+      // no secrets). Same shape as the Intent Layer's "Intent prompt composed"
+      // log (intent-loader.ts), generalized to the main review prompt.
+      runLog.info('Review prompt composed', {
+        run_id: runId,
+        sections: describePromptSections(outcome.assembly, diff.raw.length),
+        provider: agent.provider,
+        model: agent.model,
+        tokens_in: tokensIn,
+        tokens_out: tokensOut,
+      });
+      // Local-debug-only knob (PROMPT_LOG_VERBOSE=true): the map-reduce chunk
+      // breakdown (file list only — no content) is extra volume, not extra
+      // sensitivity, but stays opt-in so a default/shared instance doesn't get
+      // a log line per changed file on every large PR.
+      if (this.container.config.promptLogVerbose && outcome.mode === 'map-reduce') {
+        runLog.info('Review prompt chunks (map-reduce)', {
+          run_id: runId,
+          chunk_count: outcome.chunks.length,
+          chunks: outcome.chunks.map((c) => c.label),
+        });
+      }
 
       const keptFindings = outcome.review.findings;
 

@@ -6,10 +6,37 @@ import { z } from 'zod';
  */
 
 // ---- Intent ----
+/** Where one piece of context for the intent classifier came from. */
+export const IntentSource = z.object({
+  kind: z.enum(['title', 'description', 'linked_issue', 'spec', 'files']),
+  /** '#412' | 'docs/specs/intent.md' | '12 files'. */
+  ref: z.string(),
+  status: z.enum(['used', 'unavailable']),
+});
+export type IntentSource = z.infer<typeof IntentSource>;
+
+export const IntentConfidence = z.enum(['high', 'medium', 'low']);
+export type IntentConfidence = z.infer<typeof IntentConfidence>;
+
+/**
+ * What the classifier MODEL returns. All fields required — strict
+ * `json_schema` mode rejects optional properties. `sources` is filled in by
+ * the server afterwards (the model cannot know what was actually resolved).
+ */
+export const IntentDraft = z.object({
+  intent: z.string(),
+  in_scope: z.array(z.string()),
+  out_of_scope: z.array(z.string()),
+  confidence: IntentConfidence,
+});
+export type IntentDraft = z.infer<typeof IntentDraft>;
+
 export const Intent = z.object({
   intent: z.string(),
   in_scope: z.array(z.string()),
   out_of_scope: z.array(z.string()),
+  confidence: IntentConfidence.default('medium'),
+  sources: z.array(IntentSource).default([]),
 });
 export type Intent = z.infer<typeof Intent>;
 

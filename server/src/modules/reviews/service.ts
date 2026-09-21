@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Container } from '../../platform/container.js';
-import type { FindingActionKind, RunEventKind, RunTrace } from '@devdigest/shared';
+import type { FindingActionKind, PrIntentRecord, RunEventKind, RunTrace } from '@devdigest/shared';
 import { AppError, NotFoundError } from '../../platform/errors.js';
 import type { AgentRow } from '../../db/rows.js';
 import { ReviewRepository } from './repository.js';
@@ -8,6 +8,9 @@ import { type ReviewDto, type ReviewDtoFinding } from './helpers.js';
 import { ReviewRunExecutor, type Logger } from './run-executor.js';
 import { actOnFinding as actOnFindingImpl } from './findings.js';
 import { reviewToDto } from './helpers.js';
+import { loadDiff } from './diff-loader.js';
+import { loadIntent } from './intent-loader.js';
+import { RunLogger } from '../../platform/run-logger.js';
 
 // Re-export DTO types + converters for backward-compatible imports from
 // './service.js' (these previously lived here; logic now in ./helpers.ts).
@@ -181,5 +184,40 @@ export class ReviewService {
 
   async getRunTrace(workspaceId: string, runId: string): Promise<RunTrace | undefined> {
     return this.repo.getRunTrace(workspaceId, runId);
+  }
+
+  // ===========================================================================
+  // Intent Layer
+  // ===========================================================================
+
+  /** The persisted intent for a PR, or undefined if never computed. */
+  async getIntent(workspaceId: string, prId: string): Promise<PrIntentRecord | undefined> {
+    const pull = await this.repo.getPull(workspaceId, prId);
+    if (!pull) throw new NotFoundError('Pull request not found');
+    return this.repo.getIntent(prId);
+  }
+
+  /**
+   * Manual (re)compute — e.g. "PR updated since" banner's Recompute button.
+   * Not a review run: no agent_runs row, no reviewer LLM call, just the cheap
+   * classifier. `force` skips the head_sha reuse check.
+   */
+  async computeIntent(
+    workspaceId: string,
+    prId: string,
+    opts: { force?: boolean } = {},
+    logger?: Logger,
+  ): Promise<PrIntentRecord> {
+    const pull = await this.repo.getPull(workspaceId, prId);
+    if (!pull) throw new NotFoundError('Pull request not found');
+    const repo = await this.repo.getRepo(pull.repoId);
+    if (!repo) throw new NotFoundError('Repo not found');
+    const diff = await loadDiff(this.container, this.repo, workspaceId, pull, repo);
+    // No runIds to fan out to (this isn't a review run) — events just mirror
+    // to stdout via `logger`.
+    const runLog = new RunLogger(this.container.runBus, [], logger, { prId });
+    return loadIntent(this.container, this.repo, workspaceId, pull, repo, diff, runLog, {
+      force: opts.force ?? true,
+    });
   }
 }

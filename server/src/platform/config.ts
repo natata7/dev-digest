@@ -40,6 +40,12 @@ const EnvSchema = z.object({
     (v) => (v === '' ? undefined : v),
     z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
   ),
+  // Extra per-chunk detail on the "Review prompt composed" log line (map-reduce
+  // chunk breakdown). Default OFF everywhere — the default line already carries
+  // per-section char counts + model + run id, which is enough for prod/shared
+  // use; this only adds volume, never new sensitive content. Meant to be flipped
+  // on in a local .env for prompt-size debugging, not in a shared/deployed one.
+  PROMPT_LOG_VERBOSE: z.string().optional(),
 });
 
 export type AppConfig = {
@@ -67,6 +73,8 @@ export type AppConfig = {
    * EXACTLY like the ripgrep-only baseline.
    */
   repoIntelEnabled: boolean;
+  /** Extra per-chunk detail on prompt-composition logs. Default false — local-dev-only knob. */
+  promptLogVerbose: boolean;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -86,5 +94,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     webOrigin: `http://localhost:${parsed.WEB_PORT}`,
     embeddingsEnabled: parsed.EMBEDDINGS_ENABLED === 'true',
     repoIntelEnabled: parsed.REPO_INTEL_ENABLED !== 'false',
+    promptLogVerbose: parsed.PROMPT_LOG_VERBOSE === 'true',
   };
 }
