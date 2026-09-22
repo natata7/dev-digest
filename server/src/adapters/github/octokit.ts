@@ -15,6 +15,11 @@ import type {
 import { withRetry, withTimeout } from '../../platform/resilience.js';
 
 const TIMEOUT = 30_000;
+// GitHub's REST API hard-caps `per_page` at 100 regardless of what's
+// requested — fetching more means following pages, not raising per_page.
+// This is a safety ceiling on the total across all pages, not a per-request
+// value.
+const MAX_PAGINATED_ITEMS = 10_000;
 
 function mapStatus(state: string, merged: boolean | undefined): PrStatus {
   if (merged) return 'merged';
@@ -76,18 +81,26 @@ export class OctokitGitHubClient implements CodeHostClient {
             repo: repo.name,
             pull_number: n,
           });
-          const { data: files } = await this.octokit.rest.pulls.listFiles({
-            owner: repo.owner,
-            repo: repo.name,
-            pull_number: n,
-            per_page: 100,
-          });
-          const { data: commits } = await this.octokit.rest.pulls.listCommits({
-            owner: repo.owner,
-            repo: repo.name,
-            pull_number: n,
-            per_page: 100,
-          });
+          let filesFetched = 0;
+          const files = await this.octokit.paginate(
+            this.octokit.rest.pulls.listFiles,
+            { owner: repo.owner, repo: repo.name, pull_number: n, per_page: 100 },
+            (response, done) => {
+              filesFetched += response.data.length;
+              if (filesFetched >= MAX_PAGINATED_ITEMS) done();
+              return response.data;
+            },
+          );
+          let commitsFetched = 0;
+          const commits = await this.octokit.paginate(
+            this.octokit.rest.pulls.listCommits,
+            { owner: repo.owner, repo: repo.name, pull_number: n, per_page: 100 },
+            (response, done) => {
+              commitsFetched += response.data.length;
+              if (commitsFetched >= MAX_PAGINATED_ITEMS) done();
+              return response.data;
+            },
+          );
           const linkedIssue = await this.resolveLinkedIssue(repo, pr.body ?? '');
           return {
             number: pr.number,
@@ -103,13 +116,13 @@ export class OctokitGitHubClient implements CodeHostClient {
             opened_at: pr.created_at,
             updated_at: pr.updated_at,
             body: pr.body,
-            files: files.map((f) => ({
+            files: files.slice(0, MAX_PAGINATED_ITEMS).map((f) => ({
               path: f.filename,
               additions: f.additions,
               deletions: f.deletions,
               patch: f.patch,
             })),
-            commits: commits.map((c) => ({
+            commits: commits.slice(0, MAX_PAGINATED_ITEMS).map((c) => ({
               sha: c.sha,
               message: c.commit.message,
               author: c.commit.author?.name ?? c.author?.login ?? 'unknown',
@@ -194,13 +207,17 @@ export class OctokitGitHubClient implements CodeHostClient {
     return withRetry(() =>
       withTimeout(
         (async () => {
-          const res = await this.octokit.rest.pulls.listReviewComments({
-            owner: repo.owner,
-            repo: repo.name,
-            pull_number: n,
-            per_page: 100,
-          });
-          return res.data.map((c) => this.mapReviewComment(c));
+          let commentsFetched = 0;
+          const comments = await this.octokit.paginate(
+            this.octokit.rest.pulls.listReviewComments,
+            { owner: repo.owner, repo: repo.name, pull_number: n, per_page: 100 },
+            (response, done) => {
+              commentsFetched += response.data.length;
+              if (commentsFetched >= MAX_PAGINATED_ITEMS) done();
+              return response.data;
+            },
+          );
+          return comments.slice(0, MAX_PAGINATED_ITEMS).map((c) => this.mapReviewComment(c));
         })(),
         TIMEOUT,
       ),
