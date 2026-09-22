@@ -39,8 +39,24 @@ export function PrDetailHeader({
         ? "var(--stale)"
         : "var(--warn)";
 
+  // Published as --pr-header-height so anything else that wants to stick
+  // below this sticky header (e.g. DiffTab's group headers) knows the real
+  // offset — this header's height varies (the stale-PR banner adds a row).
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    // offsetHeight (not contentRect, which excludes padding/border) — this
+    // header has both, and the sticky offset needs its real rendered height.
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty("--pr-header-height", `${el.offsetHeight}px`);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div style={s.root}>
+    <div ref={rootRef} style={s.root}>
       <div style={s.titleRow}>
         <div style={s.titleCol}>
           <h1 style={s.h1}>

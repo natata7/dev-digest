@@ -130,6 +130,10 @@ export function DiffTab({ prId, filesCount, files, canComment, provider = "githu
         Files changed · {filesCount} files
       </SectionLabel>
 
+      {reviews && reviews.length === 0 && (
+        <div style={s.noReviewHint}>{t("smartDiff.noReviewYet")}</div>
+      )}
+
       {canGroup ? (
         <div style={s.groupsWrap}>
           {ROLE_ORDER.map((role) => {

@@ -17,6 +17,13 @@ export const s = {
     borderLeftWidth: 0,
     borderBottomStyle: "solid",
     borderBottomColor: "var(--border)",
+    // Sticks just below PrDetailHeader's own sticky root — that header
+    // publishes its real (variable) height as --pr-header-height since it
+    // includes a banner row only sometimes.
+    position: "sticky",
+    top: "var(--pr-header-height, 0px)",
+    zIndex: 3,
+    background: "var(--bg-primary)",
   } satisfies CSSProperties,
   groupLabel: { fontSize: 13, fontWeight: 600, color: "var(--text-primary)" } satisfies CSSProperties,
   groupCount: { fontSize: 12, color: "var(--text-muted)" } satisfies CSSProperties,
@@ -28,6 +35,11 @@ export const s = {
     color: "var(--text-muted)",
   } satisfies CSSProperties,
   groupsWrap: { display: "flex", flexDirection: "column", gap: 16 } satisfies CSSProperties,
+  noReviewHint: {
+    fontSize: 12.5,
+    color: "var(--text-muted)",
+    padding: "0 4px 12px",
+  } satisfies CSSProperties,
   groupFindingDot: {
     width: 7,
     height: 7,

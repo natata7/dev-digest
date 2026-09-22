@@ -70,7 +70,8 @@
     "showFindings": "Show findings ({count})",
     "hideFindings": "Hide findings ({count})",
     "showComments": "Show comments ({count})",
-    "hideComments": "Hide comments ({count})"
+    "hideComments": "Hide comments ({count})",
+    "noReviewYet": "No review run yet — findings will show inline here once you Run review."
   },
   "list": {
     "breadcrumb": "Pull Requests",

@@ -99,3 +99,23 @@ export function lineSignFor(kind: Line["kind"]): CSSProperties {
     flexShrink: 0,
   };
 }
+
+/** Left-border stripe marking a line with a finding — per-side longhands
+ *  only, never combined with the shorthand `border`/`borderColor` (see
+ *  client/INSIGHTS.md). */
+export function lineSeverityStripe(color: string): CSSProperties {
+  return { borderLeftWidth: 3, borderLeftStyle: "solid", borderLeftColor: color };
+}
+
+/** "blocker"/"warning"/"suggestion" label to the right of a flagged line. */
+export function severityRowLabelFor(color: string): CSSProperties {
+  return {
+    fontSize: 11,
+    fontWeight: 600,
+    color,
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+    marginLeft: 10,
+    flexShrink: 0,
+  };
+}

@@ -4,8 +4,33 @@
    line keys; NEVER imports a feature-level component like FindingCard. The
    caller supplies `render` so it stays presentation-agnostic. */
 import type { ReactNode } from "react";
-import type { FindingRecord } from "@devdigest/shared";
+import type { FindingRecord, Severity } from "@devdigest/shared";
 import { lineKey } from "./comments";
+
+/** Rank for picking the most severe finding when several share a line. */
+const SEVERITY_RANK: Record<Severity, number> = { CRITICAL: 3, WARNING: 2, SUGGESTION: 1 };
+
+/** Row-label wording for the flagged line's severity stripe — distinct from
+ *  SeverityBadge's own "Critical"/"Warning"/"Suggestion" wording used on the
+ *  finding card itself. */
+const ROW_LABEL: Record<Severity, string> = {
+  CRITICAL: "blocker",
+  WARNING: "warning",
+  SUGGESTION: "suggestion",
+};
+
+/** The most severe finding among several anchored to the same code line —
+ *  that's the one whose color/label marks the line. */
+export function topSeverityFinding(findings: FindingRecord[]): FindingRecord | undefined {
+  if (findings.length === 0) return undefined;
+  return findings.reduce((top, f) =>
+    (SEVERITY_RANK[f.severity] ?? 0) > (SEVERITY_RANK[top.severity] ?? 0) ? f : top,
+  );
+}
+
+export function rowSeverityLabel(severity: Severity): string {
+  return ROW_LABEL[severity] ?? severity.toLowerCase();
+}
 
 /** What the viewer needs to read + render findings anchored to diff lines. */
 export interface DiffFindingApi {
