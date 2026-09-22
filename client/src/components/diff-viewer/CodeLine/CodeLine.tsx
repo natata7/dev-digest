@@ -3,7 +3,9 @@
 "use client";
 
 import React from "react";
+import type { FindingRecord } from "@devdigest/shared";
 import { commentTargetFor, type CommentThread, type DiffCommentApi, cs } from "../comments";
+import { type DiffFindingApi } from "../findings";
 import { type Line } from "../helpers";
 import { s, lineRowFor, lineSignFor } from "../styles";
 import { CommentThreadView } from "../CommentThreadView";
@@ -14,11 +16,15 @@ export function CodeLine({
   path,
   threads,
   commenting,
+  findings,
+  findingApi,
 }: {
   ln: Line;
   path: string;
   threads: CommentThread[];
   commenting?: DiffCommentApi;
+  findings?: FindingRecord[];
+  findingApi?: DiffFindingApi;
 }) {
   const [hover, setHover] = React.useState(false);
   const [composing, setComposing] = React.useState(false);
@@ -69,6 +75,14 @@ export function CodeLine({
         threads.map((th) => (
           <CommentThreadView key={th.rootId} thread={th} commenting={commenting} path={path} />
         ))}
+
+      {findingApi && findingApi.show && findings && findings.length > 0 && (
+        <div style={cs.thread}>
+          {findings.map((f) => (
+            <React.Fragment key={f.id}>{findingApi.render(f)}</React.Fragment>
+          ))}
+        </div>
+      )}
 
       {commenting && composing && target && (
         <InlineComposer

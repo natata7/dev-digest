@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { Container } from '../../platform/container.js';
-import type { FindingActionKind, PrIntentRecord, RunEventKind, RunTrace } from '@devdigest/shared';
+import type {
+  FindingActionKind,
+  PrIntentRecord,
+  RunEventKind,
+  RunTrace,
+  SmartDiff,
+} from '@devdigest/shared';
 import { AppError, NotFoundError } from '../../platform/errors.js';
 import type { AgentRow } from '../../db/rows.js';
 import { ReviewRepository } from './repository.js';
@@ -11,6 +17,7 @@ import { reviewToDto } from './helpers.js';
 import { loadDiff } from './diff-loader.js';
 import { loadIntent } from './intent-loader.js';
 import { RunLogger } from '../../platform/run-logger.js';
+import { buildSmartDiff } from './smart-diff/index.js';
 
 // Re-export DTO types + converters for backward-compatible imports from
 // './service.js' (these previously lived here; logic now in ./helpers.ts).
@@ -179,6 +186,35 @@ export class ReviewService {
     }
     return rows.map(({ review, findings }) =>
       reviewToDto(review, findings, review.agentId ? names.get(review.agentId) : null),
+    );
+  }
+
+  /**
+   * Group a PR's changed files by role (core/tests/wiring/docs/boilerplate)
+   * and attach finding line numbers per path. `finding_lines` is built from
+   * ALL of the PR's reviews' findings, not just the newest review row — the
+   * client's `usePrReviews` also returns every review, and picking only one
+   * review here could silently hide another agent's finding (see
+   * server/INSIGHTS.md's "latest review is a trap" pattern). No LLM call.
+   */
+  async smartDiff(workspaceId: string, prId: string): Promise<SmartDiff> {
+    const pull = await this.repo.getPull(workspaceId, prId);
+    if (!pull) throw new NotFoundError('Pull request not found');
+    const files = await this.repo.getPrFiles(prId);
+    const reviews = await this.repo.reviewsForPull(prId);
+
+    const findingLinesByPath = new Map<string, number[]>();
+    for (const { findings } of reviews) {
+      for (const f of findings) {
+        const lines = findingLinesByPath.get(f.file) ?? [];
+        lines.push(f.startLine);
+        findingLinesByPath.set(f.file, lines);
+      }
+    }
+
+    return buildSmartDiff(
+      files.map((f) => ({ path: f.path, additions: f.additions, deletions: f.deletions })),
+      findingLinesByPath,
     );
   }
 

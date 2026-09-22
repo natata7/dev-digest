@@ -64,6 +64,15 @@ export const s = {
     color: "var(--text-primary)",
     paddingRight: 12,
   } satisfies CSSProperties,
+  /** Header dot indicating a file has ≥1 finding (no count, unlike the
+   *  comment-count badge next to it). */
+  findingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: "var(--danger, #e5484d)",
+    flexShrink: 0,
+  } satisfies CSSProperties,
 } as const;
 
 /** Chevron rotates 90deg when the file card is open. */

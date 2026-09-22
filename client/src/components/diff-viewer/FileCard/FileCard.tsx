@@ -6,6 +6,7 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import { Icon } from "@devdigest/ui";
 import type { PrFile } from "@/lib/types";
+import type { FindingRecord } from "@devdigest/shared";
 import { AUTO_EXPAND_MAX_LINES } from "../constants";
 import { parsePatch, type Line } from "../helpers";
 import {
@@ -15,6 +16,7 @@ import {
   type CommentThread,
   type DiffCommentApi,
 } from "../comments";
+import { partitionFindings, type DiffFindingApi } from "../findings";
 import { s, chevronFor } from "../styles";
 import { CodeLine } from "../CodeLine";
 import { OutdatedComments } from "../OutdatedComments";
@@ -30,10 +32,32 @@ function threadsForLine(ln: Line, matched: Map<string, CommentThread[]>): Commen
   return out;
 }
 
-export function FileCard({ file, commenting }: { file: PrFile; commenting?: DiffCommentApi }) {
+/** Findings anchored to a given parsed line (only the RIGHT/new-side key —
+   findings cite a single line, unlike comments which can anchor LEFT too). */
+function findingsForLine(ln: Line, matched: Map<string, FindingRecord[]>): FindingRecord[] {
+  if (matched.size === 0) return [];
+  const out: FindingRecord[] = [];
+  for (const key of keysForLine(ln)) {
+    const list = matched.get(key);
+    if (list) out.push(...list);
+  }
+  return out;
+}
+
+export function FileCard({
+  file,
+  commenting,
+  findings,
+  defaultOpen,
+}: {
+  file: PrFile;
+  commenting?: DiffCommentApi;
+  findings?: DiffFindingApi;
+  defaultOpen?: boolean;
+}) {
   const t = useTranslations("shell");
   const [open, setOpen] = React.useState(
-    (file.additions ?? 0) + (file.deletions ?? 0) <= AUTO_EXPAND_MAX_LINES
+    defaultOpen ?? (file.additions ?? 0) + (file.deletions ?? 0) <= AUTO_EXPAND_MAX_LINES,
   );
   const lines = React.useMemo(() => parsePatch(file.patch), [file.patch]);
 
@@ -52,6 +76,20 @@ export function FileCard({ file, commenting }: { file: PrFile; commenting?: Diff
     ? commenting.comments.filter((c) => c.path === file.path).length
     : 0;
 
+  // Same matched/unanchored split as comments, over this file's findings.
+  const findingList = findings?.findings;
+  const { matched: findingsMatched, unanchored: findingsUnanchored } = React.useMemo(() => {
+    if (!findingList) return { matched: new Map<string, FindingRecord[]>(), unanchored: [] };
+    const fileFindings = findingList.filter((f) => f.file === file.path);
+    const renderedKeys = new Set<string>();
+    for (const ln of lines) for (const k of keysForLine(ln)) renderedKeys.add(k);
+    return partitionFindings(fileFindings, renderedKeys);
+  }, [findingList, file.path, lines]);
+
+  const hasFindings = findings
+    ? findingList!.some((f) => f.file === file.path)
+    : false;
+
   return (
     <div style={s.fileCard}>
       <div onClick={() => setOpen((o) => !o)} style={s.fileHeader}>
@@ -64,6 +102,13 @@ export function FileCard({ file, commenting }: { file: PrFile; commenting?: Diff
           <span style={s.addText}>+{file.additions}</span>{" "}
           <span style={s.delText}>−{file.deletions}</span>
         </span>
+        {hasFindings && (
+          <span
+            aria-label="Has findings"
+            title="Has findings"
+            style={s.findingDot}
+          />
+        )}
         {commentCount > 0 && (
           <span
             style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--text-muted)" }}
@@ -85,11 +130,20 @@ export function FileCard({ file, commenting }: { file: PrFile; commenting?: Diff
                 path={file.path}
                 threads={threadsForLine(ln, matched)}
                 commenting={commenting}
+                findings={findingsForLine(ln, findingsMatched)}
+                findingApi={findings}
               />
             ))
           )}
           {commenting && commenting.showComments && (
             <OutdatedComments threads={outdated} provider={commenting.provider} />
+          )}
+          {findings && findings.show && findingsUnanchored.length > 0 && (
+            <div style={{ margin: "4px 14px 4px 58px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {findingsUnanchored.map((f) => (
+                <React.Fragment key={f.id}>{findings.render(f)}</React.Fragment>
+              ))}
+            </div>
           )}
         </div>
       )}
