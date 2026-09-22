@@ -3,3 +3,6 @@ export const DEFAULT_TYPE = "custom" as const;
 
 /** Modal width (px). */
 export const MODAL_WIDTH = 640;
+
+/** Import source toggle. */
+export type ImportMode = "file" | "url";

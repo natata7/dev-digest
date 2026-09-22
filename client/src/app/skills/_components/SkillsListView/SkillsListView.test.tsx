@@ -101,12 +101,12 @@ describe("SkillsListView", () => {
     expect(screen.getByText(SKILL_B.name)).toBeInTheDocument();
   });
 
-  it("Add Skill menu shows Create and Import from file, not URL or Community", () => {
+  it("Add Skill menu shows Create, Import from file, and Import from URL, not Community", () => {
     renderList();
     fireEvent.click(screen.getByText("Add Skill"));
     expect(screen.getByText("Create")).toBeInTheDocument();
     expect(screen.getByText("Import from file")).toBeInTheDocument();
-    expect(screen.queryByText("Import from URL")).not.toBeInTheDocument();
+    expect(screen.getByText("Import from URL")).toBeInTheDocument();
     expect(screen.queryByText("Search community skills…")).not.toBeInTheDocument();
   });
 

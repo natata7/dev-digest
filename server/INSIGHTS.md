@@ -27,6 +27,9 @@ When a feature looks like it's just never been built (e.g. cost tracking absent 
 
 ## Mistake
 
+### 2026-09-22 — WHATWG `URL.hostname` keeps the `[...]` brackets for an IPv6 literal
+`new URL('https://[::1]/').hostname === '[::1]'`, not `'::1'` — confirmed via `node -e`. Hit building the SSRF-safe fetcher (`server/src/adapters/http/safe-fetch.ts`): `net.isIPv6('[::1]')` and `dns.promises.lookup('[::1]')` both fail/mismatch on the bracketed form, so an `assertSafeUrl` that fed `url.hostname` straight into `isPrivateAddress` silently let `https://[::1]/` through (caught by the table-driven test in `safe-fetch.test.ts`, not by inspection). Fix: a single `unbracket()` helper (`safe-fetch.ts:59`) strips `[`/`]` before ANY IP-literal or DNS check; both `assertSafeUrl` (`:85`) and `assertPublicHost` (`:105`) call it. Any future code that reads `URL.hostname` expecting a bare IPv6 address needs the same strip.
+
 ### 2026-09-19 — `server/src/db/seed.ts` is three hops from the repo root, not four
 `new URL('../../../../docs/skill-fixtures/happy-path-only.diff', import.meta.url)` from `server/src/db/seed.ts` resolved to `/Users/nata/Documents/neo/DevDigest/docs/...` (parent of the repo) and `pnpm db:seed` threw ENOENT. The file lives at `server/src/db/` → `../../../docs/...` is the monorepo `docs/`. Hermetic tests under `server/test/` correctly use `../../docs/...` — do not copy that URL into seed.
 
@@ -51,6 +54,9 @@ Hit in `server/src/modules/skills/import.ts` documenting nested zip paths like `
 `server/src/db/schema/runs.ts` (`agentRuns.batchId`, uuid, no FK) + `server/src/modules/reviews/service.ts` (`runReview`, one `randomUUID()` shared across the per-agent `createAgentRun` loop). Needed because the PR-list Cost column sums the *latest review batch's* completed run costs (all agents one "Run Review" click targeted), not just the single most-recent run — the historical `93119a5e` implementation only ever surfaced the single-latest-run cost, so `batch_id` didn't exist before. Aggregation lives in `server/src/modules/pulls/latest-batch-cost.ts` (`latestBatchCostByPr`): newest-first, first-seen batch key per PR wins, only `status='done'` rows in that batch contribute, zero contributing rows → `null` not `0`.
 
 ## Context
+
+### 2026-09-22 — `PromptCache`'s constructor default `now: () => 0` means "never expires," not "real TTL"
+`server/src/platform/model-router.ts:44-49` — `new PromptCache()` with no second arg stores every entry with `expires = 0 + ttlMs` and `get()` never sees `now() > expires` (since `now()` is permanently 0), so entries live forever. `PromptCache`/`hashKey` had zero call sites before this session (the module's own docstring: "Call sites opt in"), so this default had never been exercised outside its own unit test. Skills import-from-URL is the first real consumer (`server/src/modules/skills/service.ts` — `new PromptCache<SkillScanResult>(SCAN_VERDICT_TTL_MS, Date.now)`); any future caller that wants an actual wall-clock TTL must pass `Date.now` explicitly — the bare default is silently permanent, not silently short-lived, which is the opposite of what most people assume "no TTL passed" means for a cache.
 
 ### 2026-09-19 — workspace SecretsProvider can supply OpenRouter even when `server/.env` `OPENROUTER_API_KEY` is empty
 `GET /settings/secrets-status` returned `openrouter: true` while `server/.env` had `OPENROUTER_API_KEY=` (length 0). Spec 03 traces were skipped on env emptiness; spec 05 live runs on #902 still called the provider. For studio demos, trust `secrets-status` (and Settings → API keys), not `.env` alone.

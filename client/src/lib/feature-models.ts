@@ -46,4 +46,11 @@ export const FEATURE_MODELS: FeatureModelDef[] = [
     defaultProvider: "openai",
     defaultModel: "gpt-5.4",
   },
+  {
+    id: "skill_scan",
+    label: "Skill Import · Scan",
+    description: "Best-effort deep scan for prompt-injection in imported skills.",
+    defaultProvider: "openrouter",
+    defaultModel: "google/gemini-2.5-flash-lite",
+  },
 ];

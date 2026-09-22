@@ -18,6 +18,7 @@ export const FeatureModelId = z.enum([
   'risk_brief',
   'conformance',
   'conventions',
+  'skill_scan',
 ]);
 export type FeatureModelId = z.infer<typeof FeatureModelId>;
 
@@ -76,6 +77,13 @@ export const FEATURE_MODELS: FeatureModelDef[] = [
     description: 'Extracts coding conventions from the repo.',
     defaultProvider: 'openai',
     defaultModel: 'gpt-5.4',
+  },
+  {
+    id: 'skill_scan',
+    label: 'Skill Import · Scan',
+    description: 'Best-effort deep scan for prompt-injection in imported skills.',
+    defaultProvider: 'openrouter',
+    defaultModel: 'google/gemini-2.5-flash-lite',
   },
 ];
 

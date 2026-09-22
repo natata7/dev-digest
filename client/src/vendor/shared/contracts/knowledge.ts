@@ -118,11 +118,32 @@ export type SkillType = z.infer<typeof SkillType>;
 export const SkillSource = z.enum(['manual', 'imported', 'imported_url', 'extracted', 'community']);
 export type SkillSource = z.infer<typeof SkillSource>;
 
+/** Level-1 (regex) and level-2 (LLM, best-effort) injection-scan verdict. */
+export const SkillScanSeverity = z.enum(['clean', 'suspicious', 'malicious']);
+export type SkillScanSeverity = z.infer<typeof SkillScanSeverity>;
+
+export const SkillScanFinding = z.object({
+  rule: z.string(),
+  severity: SkillScanSeverity,
+  excerpt: z.string().max(200),
+});
+export type SkillScanFinding = z.infer<typeof SkillScanFinding>;
+
+export const SkillScanResult = z.object({
+  severity: SkillScanSeverity,
+  findings: z.array(SkillScanFinding),
+  /** True once the (best-effort) LLM pass ran; false = pattern-only result. */
+  llm_checked: z.boolean(),
+});
+export type SkillScanResult = z.infer<typeof SkillScanResult>;
+
 /** Extracted SKILL.md core before persist. Description may be empty until confirm. */
 export const SkillImportPreview = z.object({
   name: z.string(),
   description: z.string(),
   body: z.string().min(1),
+  /** Present once the preview pipeline has run the injection scan (file + URL imports). */
+  scan: SkillScanResult.optional(),
 });
 export type SkillImportPreview = z.infer<typeof SkillImportPreview>;
 
