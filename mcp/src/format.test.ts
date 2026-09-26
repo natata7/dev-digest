@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Agent, ConventionList, ReviewDto, ReviewDtoFinding } from '@devdigest/shared';
-import { MAX_CHARS, cap, fence, formatAgents, formatConventions, formatReview } from './format.js';
+import type { Agent, BlastRadius, ConventionList, ReviewDto, ReviewDtoFinding } from '@devdigest/shared';
+import { MAX_CHARS, cap, fence, formatAgents, formatBlast, formatConventions, formatReview } from './format.js';
 
 const finding = (over: Partial<ReviewDtoFinding>): ReviewDtoFinding => ({
   id: 'f',
@@ -135,5 +135,75 @@ describe('formatConventions', () => {
   it('explains never-extracted and nothing-accepted cases', () => {
     expect(formatConventions('acme/api', list([], null), opts)).toContain('No conventions extracted yet');
     expect(formatConventions('acme/api', list([{ status: 'pending' }]), opts)).toContain("0 accepted conventions (1 pending");
+  });
+});
+
+describe('formatBlast', () => {
+  const blast = (over: Partial<BlastRadius>): BlastRadius => ({
+    changed_symbols: [{ name: 'chargeUser', file: 'src/billing.ts', kind: 'function' }],
+    downstream: [
+      {
+        symbol: 'chargeUser',
+        callers: [{ name: 'handleCheckout', file: 'src/checkout.ts', line: 42 }],
+        endpoints_affected: ['POST /checkout'],
+        crons_affected: ['nightly-billing'],
+      },
+    ],
+    summary: '1 symbols · 1 callers · 1 endpoints · 1 crons',
+    ...over,
+  });
+
+  it('prints summary first, then symbol() → caller → endpoints/crons, fenced as untrusted', () => {
+    const out = formatBlast(blast({}), 'concise');
+    const lines = out.split('\n');
+    expect(lines[0]).toBe('1 symbols · 1 callers · 1 endpoints · 1 crons');
+    expect(out).toContain('chargeUser()');
+    expect(out).toContain('  ↳ src/checkout.ts:42 (handleCheckout)');
+    expect(out).toContain('endpoints: POST /checkout');
+    expect(out).toContain('crons: nightly-billing');
+    expect(out).toContain('<untrusted source="blast-radius">');
+  });
+
+  it('says so when a changed symbol has no downstream callers', () => {
+    const out = formatBlast(
+      blast({ downstream: [{ symbol: 'chargeUser', callers: [], endpoints_affected: [], crons_affected: [] }] }),
+      'concise',
+    );
+    expect(out).toContain('no downstream callers found.');
+  });
+
+  it('adds a warning line naming the degraded reason', () => {
+    const out = formatBlast(blast({ degraded: true, reason: 'index_partial' }), 'concise');
+    expect(out).toContain('⚠ index incomplete (index_partial) — missing callers ≠ no impact; resync the repo.');
+  });
+
+  it('falls back to "unknown" when degraded but no reason is given', () => {
+    const out = formatBlast(blast({ degraded: true }), 'concise');
+    expect(out).toContain('⚠ index incomplete (unknown)');
+  });
+
+  it('detailed adds changed symbols and lists symbols with zero callers', () => {
+    const out = formatBlast(
+      blast({
+        downstream: [
+          {
+            symbol: 'chargeUser',
+            callers: [{ name: 'handleCheckout', file: 'src/checkout.ts', line: 42 }],
+            endpoints_affected: [],
+            crons_affected: [],
+          },
+          { symbol: 'refundUser', callers: [], endpoints_affected: [], crons_affected: [] },
+        ],
+      }),
+      'detailed',
+    );
+    expect(out).toContain('Changed symbols: chargeUser (function) — src/billing.ts');
+    expect(out).toContain('No callers found: refundUser');
+    expect(out).not.toContain('no downstream callers found.');
+  });
+
+  it('does not add the changed-symbols line in concise mode', () => {
+    const out = formatBlast(blast({}), 'concise');
+    expect(out).not.toContain('Changed symbols:');
   });
 });

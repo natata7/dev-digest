@@ -1,4 +1,4 @@
-import type { Agent, ConventionList, ReviewDto, Severity } from '@devdigest/shared';
+import type { Agent, BlastRadius, ConventionList, ReviewDto, Severity } from '@devdigest/shared';
 
 /**
  * Pure text formatting (no I/O). Output is compact text, not JSON — cheaper
@@ -102,5 +102,40 @@ export function formatConventions(
   });
   const out = [header, fence('repo-conventions', lines.join('\n'))];
   if (kept.length > shown.length) out.push(`Showing ${shown.length} of ${kept.length} — raise limit.`);
+  return out.join('\n');
+}
+
+export function formatBlast(blast: BlastRadius, format: ResponseFormat): string {
+  const out = [blast.summary];
+  if (blast.degraded) {
+    out.push(
+      `⚠ index incomplete (${blast.reason ?? 'unknown'}) — missing callers ≠ no impact; resync the repo.`,
+    );
+  }
+
+  const withCallers = blast.downstream.filter((d) => d.callers.length > 0);
+  const body: string[] = [];
+
+  if (format === 'detailed' && blast.changed_symbols.length > 0) {
+    body.push(`Changed symbols: ${blast.changed_symbols.map((s) => `${s.name} (${s.kind}) — ${s.file}`).join('; ')}`);
+  }
+
+  if (withCallers.length === 0) {
+    body.push('no downstream callers found.');
+  } else {
+    for (const d of withCallers) {
+      body.push(`${d.symbol}()`);
+      for (const c of d.callers) body.push(`  ↳ ${c.file}:${c.line} (${c.name})`);
+      if (d.endpoints_affected.length) body.push(`  endpoints: ${d.endpoints_affected.join(', ')}`);
+      if (d.crons_affected.length) body.push(`  crons: ${d.crons_affected.join(', ')}`);
+    }
+  }
+
+  if (format === 'detailed') {
+    const noCallers = blast.downstream.filter((d) => d.callers.length === 0);
+    if (noCallers.length > 0) body.push(`No callers found: ${noCallers.map((d) => d.symbol).join(', ')}`);
+  }
+
+  out.push(fence('blast-radius', body.join('\n')));
   return out.join('\n');
 }

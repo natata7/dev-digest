@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Agent, ConventionList, ReviewDto, RunDetail } from '@devdigest/shared';
+import type { Agent, BlastRadius, ConventionList, ReviewDto, RunDetail } from '@devdigest/shared';
 import { ToolError, api, resolveAgent, resolvePr, resolveRepo } from './api.js';
-import { cap, formatAgents, formatConventions, formatReview } from './format.js';
+import { cap, formatAgents, formatBlast, formatConventions, formatReview } from './format.js';
 import { sleep, startAndWait } from './run.js';
 
 /**
@@ -207,22 +207,33 @@ export function createServer(): McpServer {
       }),
   );
 
-  // ponytail: stub — the real impact map is homework; target shape is BlastRadius (contracts/brief.ts).
   server.registerTool(
     'get_blast_radius',
     {
-      title: 'Get PR blast radius (not implemented)',
+      title: 'Get PR blast radius',
       description:
-        "DevDigest PR impact map (changed symbols → downstream callers). NOT IMPLEMENTED YET — always returns an error; never read it as 'no impact'.",
-      inputSchema: { pr },
+        'Get a PR impact map: changed symbols and their downstream callers, affected endpoints and crons. ' +
+        'Call before reviewing a PR to see what code outside the diff may break.',
+      inputSchema: {
+        pr,
+        response_format: z
+          .enum(['concise', 'detailed', 'json'])
+          .default('concise')
+          .describe('json returns the raw BlastRadius payload verbatim'),
+      },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    () =>
+    (args) =>
       safe(async () => {
-        throw new ToolError(
-          'NOT IMPLEMENTED: blast radius is not available in DevDigest yet. This says nothing about impact — ' +
-            'do not conclude the PR has no downstream effects. Inspect callers manually.',
-        );
+        const { id, label } = await resolvePr(args.pr);
+        const blast = await api<BlastRadius>(`/pulls/${id}/blast`).catch((err: unknown) => {
+          if (err instanceof ToolError && err.status === 404) {
+            throw new ToolError('PR not found — pass owner/repo#number, a PR URL or a DevDigest PR uuid');
+          }
+          throw err;
+        });
+        if (args.response_format === 'json') return JSON.stringify(blast);
+        return [`PR ${label}`, formatBlast(blast, args.response_format)].join('\n');
       }),
   );
 

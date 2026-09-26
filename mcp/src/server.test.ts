@@ -1,9 +1,11 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import type { BlastRadius } from '@devdigest/shared';
 import { createServer } from './server.js';
 
 const RUN_ID = '1b2c3d4e-0000-4000-8000-000000000001';
+const PR_ID = '2b3c4d5e-0000-4000-8000-000000000002';
 
 /** Protocol-level: a real MCP client talks to the server over an in-memory pair; the HTTP API is stubbed. */
 const client = new Client({ name: 'test', version: '0' });
@@ -97,10 +99,42 @@ describe('tools', () => {
     expect(text(r)).toContain('No conventions extracted yet for acme/api');
   });
 
-  it('get_blast_radius is an explicit NOT IMPLEMENTED error', async () => {
-    const r = await client.callTool({ name: 'get_blast_radius', arguments: { pr: 'acme/api#1' } });
+  it('get_blast_radius concise text shows the caller file:line', async () => {
+    const blast: BlastRadius = {
+      changed_symbols: [{ name: 'chargeUser', file: 'src/billing.ts', kind: 'function' }],
+      downstream: [
+        {
+          symbol: 'chargeUser',
+          callers: [{ name: 'handleCheckout', file: 'src/checkout.ts', line: 42 }],
+          endpoints_affected: ['POST /checkout'],
+          crons_affected: [],
+        },
+      ],
+      summary: '1 symbols · 1 callers · 1 endpoints · 0 crons',
+    };
+    stubApi({ [`/pulls/${PR_ID}/blast`]: blast });
+    const r = await client.callTool({ name: 'get_blast_radius', arguments: { pr: PR_ID } });
+    expect(r.isError).toBeFalsy();
+    expect(text(r)).toContain('src/checkout.ts:42 (handleCheckout)');
+  });
+
+  it('get_blast_radius response_format json returns the stub body verbatim', async () => {
+    const blast: BlastRadius = {
+      changed_symbols: [],
+      downstream: [],
+      summary: '0 symbols · 0 callers · 0 endpoints · 0 crons',
+    };
+    stubApi({ [`/pulls/${PR_ID}/blast`]: blast });
+    const r = await client.callTool({ name: 'get_blast_radius', arguments: { pr: PR_ID, response_format: 'json' } });
+    expect(r.isError).toBeFalsy();
+    expect(JSON.parse(text(r))).toEqual(blast);
+  });
+
+  it('get_blast_radius unknown PR (404) → isError naming the PR-not-found next step', async () => {
+    stubApi({});
+    const r = await client.callTool({ name: 'get_blast_radius', arguments: { pr: PR_ID } });
     expect(r.isError).toBe(true);
-    expect(text(r)).toContain('NOT IMPLEMENTED');
+    expect(text(r)).toContain('PR not found — pass owner/repo#number, a PR URL or a DevDigest PR uuid');
   });
 
   it('API down → every tool returns the dev.sh hint as isError', async () => {
