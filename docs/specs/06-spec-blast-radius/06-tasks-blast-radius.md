@@ -68,7 +68,7 @@ Spec: [06-spec-blast-radius.md](./06-spec-blast-radius.md)
 - [x] 1.7 Write `service.test.ts` (fake repo-intel via container overrides): facade called once with changed files; unknown PR → NotFound; degraded result passes through. Add `/pulls/:id/blast` to `server/test/routes-smoke.test.ts`.
 - [x] 1.8 Run `pnpm typecheck`, `pnpm lint`, hermetic tests in `server`; start stack, pick test PR (touches `server/src/modules/reviews/helpers.ts` or `client/src/components/diff-viewer/helpers.ts`), verify `index-state` = `full`, capture curl output + log excerpt into `06-proofs/`.
 
-### [~] 2.0 Client: Blast radius block (Tree view) on Overview (Unit 2)
+### [x] 2.0 Client: Blast radius block (Tree view) on Overview (Unit 2)
 
 #### 2.0 Proof Artifact(s)
 - Test: `BlastRadiusCard.test.tsx` passes — summary counts, caller links (GitHub `/blob/<sha>/…#L<n>` and GitLab `/-/blob/<sha>/…#L<n>`), cron pills separate from endpoint pills, `noDownstream` text, degraded badge with reason + Resync button, clicking Resync issues `POST /repos/<repoId>/resync`, symbol collapse/expand, error state.
@@ -84,7 +84,7 @@ Spec: [06-spec-blast-radius.md](./06-spec-blast-radius.md)
 - [x] 2.5 Empty states: no changed symbols → `empty.noSymbols`; symbols but zero callers → `noDownstream`; loading and error states that don't break the Overview tab.
 - [x] 2.6 Degraded state: when `degraded`, show badge + translated reason and a Resync button using `useResyncRepoIntel(repoId)`; poll `useRepoIntelStatus(repoId, true)` until `lastIndexedSha`/`updatedAt` changes, then invalidate `["blast", prId]`.
 - [x] 2.7 Write `helpers.test.ts` (counts, URL building for both providers) and `BlastRadiusCard.test.tsx` (RTL + mocked fetch, following `IntentCard.test.tsx`): all cases from the proof artifact list, including asserting that the Resync click calls `POST /repos/<repoId>/resync` (mocked fetch receives method + URL).
-- [ ] 2.8 Add `OverviewTab/OverviewTab.test.tsx` rendering both cards (regression guard for the new props); run `pnpm typecheck`, `pnpm lint`, `pnpm test` in `client` (incl. `IntentCard.test.tsx`); capture `tree.png`, `degraded.png`, `no-callers.png` on the running stack; click a caller link and confirm it opens the exact line.
+- [x] 2.8 Add `OverviewTab/OverviewTab.test.tsx` rendering both cards (regression guard for the new props); run `pnpm typecheck`, `pnpm lint`, `pnpm test` in `client` (incl. `IntentCard.test.tsx`); capture `tree.png`, `degraded.png`, `no-callers.png` on the running stack; click a caller link and confirm it opens the exact line.
 
 ### [x] 3.0 MCP: real `get_blast_radius` (Unit 3)
 
@@ -99,7 +99,7 @@ Spec: [06-spec-blast-radius.md](./06-spec-blast-radius.md)
 - [x] 3.4 Update `format.test.ts` and `server.test.ts`: formatter cases (normal, no callers, degraded), json mode equals stub body, unknown PR error, annotations; delete NOT IMPLEMENTED test.
 - [x] 3.5 Run `npm run typecheck`, `npm run lint`, `npm test` in `mcp`; call the tool from Claude Code on the test PR and save transcript to `06-proofs/mcp-transcript.md`, comparing with `tree.png`.
 
-### [~] 4.0 Client: Graph view + Tree/Graph toggle (Unit 4)
+### [x] 4.0 Client: Graph view + Tree/Graph toggle (Unit 4)
 
 #### 4.0 Proof Artifact(s)
 - Test: `helpers.test.ts` graph cases pass — `BlastRadius` → nodes (symbols / callers / endpoints+crons) and edges; duplicates merged; empty input → no nodes.
@@ -110,9 +110,9 @@ Spec: [06-spec-blast-radius.md](./06-spec-blast-radius.md)
 - [x] 4.1 Add `toGraph(blast)` in `BlastRadiusCard/helpers.ts`: three columns (symbols, callers by name, endpoints+crons), edges symbol→caller and caller→endpoint/cron using the group's facts; deterministic ordering.
 - [x] 4.2 Create `BlastGraph.tsx`: inline SVG, column layout with fixed row spacing, curved edges, truncated labels with `<title>` for full text, legend (changed symbol · callers · endpoints affected), `aria-label={t("graph.ariaLabel")}`, `graph.empty` when no callers. No new dependency.
 - [x] 4.3 Add segmented Tree/Graph toggle (`view.tree`, `view.graph`, Tree default) to the summary row of `BlastRadiusCard`.
-- [ ] 4.4 Tests for `toGraph` and toggle/empty/aria cases; run client verify; capture `graph.png`.
+- [x] 4.4 Tests for `toGraph` and toggle/empty/aria cases; run client verify; capture `graph.png`.
 
-### [~] 5.0 Prior PRs touching these files — GitHub + GitLab (Unit 5)
+### [x] 5.0 Prior PRs touching these files — GitHub + GitLab (Unit 5)
 
 #### 5.0 Proof Artifact(s)
 - Test: `service.test.ts` — second `history()` call for the same PR + head sha doesn't call the code host again (cache hit).
@@ -126,9 +126,9 @@ Spec: [06-spec-blast-radius.md](./06-spec-blast-radius.md)
 - [x] 5.2 Implement in `octokit.ts`: for each of the first 10 files, list commits by `path` (per_page small) → `listPullRequestsAssociatedWithCommit` → keep merged, dedupe by number, collect overlapping files; wrap with existing `withRetry`/`withTimeout`.
 - [x] 5.3 Implement in `gitlab/rest.ts`: `GET /projects/:id/repository/commits?path=…` → `GET /projects/:id/repository/commits/:sha/merge_requests` → keep `state=merged`, dedupe by iid, collect overlap; same resilience wrappers.
 - [x] 5.4 In `BlastService` add `history(workspaceId, prId)`: resolve PR/repo/files, call adapter with `excludeNumber = pr.number`, `limit = 5`; sort by overlap count desc then `merged_at` desc; `notes = "touched <n> of these files"`; any error → log warn + `{ history: [] }`; cache results in memory keyed by `prId + head_sha` (`Map`, small bounded size) so repeated views don't re-hit the code host. Add `GET /pulls/:id/history` (response `PrHistory`).
-- [ ] 5.5 Adapter + service tests (mocked HTTP / fake code host); add route to smoke test.
-- [ ] 5.6 Client: `usePrHistory(prId)` in `hooks/blast.ts` with `staleTime: Infinity` (merged history doesn't change within a session); `PriorPrs.tsx` collapsible row with count chip at the bottom of the card; items link via `repoPrUrl(provider, repoFullName, number)` and show title, author, date, overlapping files; add `prior.*` keys to `blast.json`.
-- [ ] 5.7 RTL tests for Prior PRs (count, expand, GitHub/GitLab links, empty); run server + client verify; capture `prior-prs.png`.
+- [x] 5.5 Adapter + service tests (mocked HTTP / fake code host); add route to smoke test.
+- [x] 5.6 Client: `usePrHistory(prId)` in `hooks/blast.ts` with `staleTime: Infinity` (merged history doesn't change within a session); `PriorPrs.tsx` collapsible row with count chip at the bottom of the card; items link via `repoPrUrl(provider, repoFullName, number)` and show title, author, date, overlapping files; add `prior.*` keys to `blast.json`.
+- [x] 5.7 RTL tests for Prior PRs (count, expand, GitHub/GitLab links, empty); run server + client verify; capture `prior-prs.png`.
 
 ### [ ] 6.0 Delivery: docs, full verification, PR with demo
 
