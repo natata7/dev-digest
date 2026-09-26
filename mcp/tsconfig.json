@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": false,
+    "declaration": false,
+    "sourceMap": true,
+    "composite": false,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2022"],
+    "paths": {
+      "@devdigest/shared": ["../server/src/vendor/shared/index.ts"],
+      "@devdigest/shared/*": ["../server/src/vendor/shared/*"],
+      // Pin bare `zod` so the shared contracts resolve to THIS package's copy
+      // (server/node_modules isn't installed in the mcp CI job). No "zod/*"
+      // entry: it bypasses zod's package "exports" for the SDK's `zod/v4/core`
+      // imports and sends tsc into TS2589 / an endless check.
+      "zod": ["./node_modules/zod"]
+    }
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts"]
+}

@@ -17,6 +17,7 @@ import type {
   OpenPrPayload,
   CommitFilesPayload,
   IssueMeta,
+  PriorPr,
   GitClient,
   CloneOptions,
   UnifiedDiff,
@@ -125,6 +126,8 @@ export interface MockGitHubOptions {
   login?: string;
   /** Existing inline review comments returned by listReviewComments. */
   comments?: PrReviewComment[];
+  /** Fixture returned by listPriorPullRequests (default: none). */
+  priorPrs?: PriorPr[];
 }
 
 export class MockGitHubClient implements CodeHostClient {
@@ -236,6 +239,10 @@ export class MockGitHubClient implements CodeHostClient {
 
   async currentLogin(): Promise<string> {
     return this.opts.login ?? 'mock-user';
+  }
+
+  async listPriorPullRequests(): Promise<PriorPr[]> {
+    return this.opts.priorPrs ?? [];
   }
 }
 
