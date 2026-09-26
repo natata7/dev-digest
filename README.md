@@ -132,6 +132,19 @@ cd ../client && pnpm install && pnpm dev               # web on :3000
 (unit/integration split: `pnpm exec vitest run --exclude '**/*.it.test.ts'` / `pnpm exec vitest run .it.test`)
 `client/`: `dev` · `build` · `start` · `test` · `typecheck`
 
+## Use from Claude Code (MCP)
+
+`mcp/` is a local stdio MCP server. It is **opt-in**: `dev.sh` doesn't start it and nothing registers it automatically — you add it to Claude Code when you need it:
+
+```sh
+./scripts/dev.sh                          # the MCP talks to the API on :3001
+cd mcp && npm install && cd ..            # once
+claude mcp add devdigest -- "$PWD/mcp/node_modules/.bin/tsx" "$PWD/mcp/src/index.ts"
+claude mcp remove devdigest -s local      # when done
+```
+
+Tools: `list_agents`, `run_agent_on_pr` (waits up to 120 s), `get_findings`, `get_conventions`, `get_blast_radius` (not implemented yet). Full from-zero guide: [mcp/README.md](mcp/README.md).
+
 ## Testing & CI
 
 One test suite per package, each gated by its own GitHub Actions workflow with a

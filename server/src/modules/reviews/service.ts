@@ -3,6 +3,7 @@ import type { Container } from '../../platform/container.js';
 import type {
   FindingActionKind,
   PrIntentRecord,
+  RunDetail,
   RunEventKind,
   RunTrace,
   SmartDiff,
@@ -80,6 +81,13 @@ export class ReviewService {
   /** All runs for a PR (any status), newest first — the run history (incl. failures). */
   async listRuns(workspaceId: string, prId: string) {
     return this.repo.listRunsForPull(workspaceId, prId);
+  }
+
+  /** One run by id (status + its PR). Throws NotFound for unknown / other-workspace ids. */
+  async getRun(workspaceId: string, runId: string): Promise<RunDetail> {
+    const run = await this.repo.getRun(workspaceId, runId);
+    if (!run) throw new NotFoundError('Run not found');
+    return run;
   }
 
   /** Delete one run from the history (+ its trace). */
