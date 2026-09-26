@@ -11,6 +11,7 @@ import type {
   OpenPrPayload,
   CommitFilesPayload,
   IssueMeta,
+  PriorPr,
 } from '@devdigest/shared';
 import { withRetry, withTimeout } from '../../platform/resilience.js';
 
@@ -20,6 +21,11 @@ const TIMEOUT = 30_000;
 // This is a safety ceiling on the total across all pages, not a per-request
 // value.
 const MAX_PAGINATED_ITEMS = 10_000;
+// Prior-PR history: how many of the PR's changed files to walk commit
+// history for, and how many recent commits per file — both bound the fan-out
+// of a "list commits by path" → "PRs for commit" walk.
+const PRIOR_PR_FILES = 10;
+const PRIOR_PR_COMMITS_PER_FILE = 10;
 
 function mapStatus(state: string, merged: boolean | undefined): PrStatus {
   if (merged) return 'merged';
@@ -385,5 +391,60 @@ export class OctokitGitHubClient implements CodeHostClient {
       withTimeout(this.octokit.rest.users.getAuthenticated(), TIMEOUT),
     );
     return res.data.login;
+  }
+
+  /**
+   * Walk commit history per file (up to `PRIOR_PR_FILES` of them) → the PRs
+   * associated with each commit — the only path the REST API offers to find
+   * "merged PRs that touched this file" without a full search-index scan.
+   * Sequential across files/commits (no concurrency) — this is a best-effort
+   * "prior PRs" sidebar, not a hot path; a handful of small sequential calls
+   * keeps it simple and avoids tripping GitHub's secondary rate limits.
+   */
+  async listPriorPullRequests(
+    repo: RepoRef,
+    files: string[],
+    opts: { excludeNumber: number; limit: number },
+  ): Promise<PriorPr[]> {
+    return withRetry(() =>
+      withTimeout(
+        (async () => {
+          const byNumber = new Map<number, PriorPr>();
+          for (const file of files.slice(0, PRIOR_PR_FILES)) {
+            const { data: commits } = await this.octokit.rest.repos.listCommits({
+              owner: repo.owner,
+              repo: repo.name,
+              path: file,
+              per_page: PRIOR_PR_COMMITS_PER_FILE,
+            });
+            for (const commit of commits) {
+              const { data: prs } =
+                await this.octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner: repo.owner,
+                  repo: repo.name,
+                  commit_sha: commit.sha,
+                });
+              for (const pr of prs) {
+                if (!pr.merged_at || pr.number === opts.excludeNumber) continue;
+                const existing = byNumber.get(pr.number);
+                if (existing) {
+                  if (!existing.files.includes(file)) existing.files.push(file);
+                } else {
+                  byNumber.set(pr.number, {
+                    number: pr.number,
+                    title: pr.title,
+                    author: pr.user?.login ?? 'unknown',
+                    merged_at: pr.merged_at,
+                    files: [file],
+                  });
+                }
+              }
+            }
+          }
+          return [...byNumber.values()].slice(0, opts.limit);
+        })(),
+        TIMEOUT,
+      ),
+    );
   }
 }

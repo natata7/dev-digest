@@ -358,6 +358,99 @@ describe('GitLabClient', () => {
     const client = new GitLabClient('glpat-token');
     expect(await client.currentLogin()).toBe('marisa.koch');
   });
+
+  describe('listPriorPullRequests', () => {
+    function mr(overrides: Partial<{ iid: number; title: string; author: { username: string } | null; state: string; merged_at: string | null }> = {}) {
+      return {
+        iid: 1,
+        title: 'An MR',
+        author: { username: 'marisa' },
+        state: 'merged',
+        merged_at: '2026-01-01T00:00:00Z',
+        ...overrides,
+      };
+    }
+
+    it('keeps only merged MRs — an opened MR associated with the same commit is dropped', async () => {
+      mockFetchSequence([
+        { body: [{ id: 'c1' }] }, // commits touching the file
+        { body: [mr({ iid: 1, state: 'opened', merged_at: null }), mr({ iid: 2, state: 'merged' })] }, // MRs for c1
+      ]);
+      const client = new GitLabClient('glpat-token');
+
+      const prior = await client.listPriorPullRequests(REPO, ['src/a.ts'], {
+        excludeNumber: 999,
+        limit: 25,
+      });
+
+      expect(prior).toHaveLength(1);
+      expect(prior[0]).toMatchObject({ number: 2, files: ['src/a.ts'] });
+    });
+
+    it('excludes the current MR iid', async () => {
+      mockFetchSequence([{ body: [{ id: 'c1' }] }, { body: [mr({ iid: 42 }), mr({ iid: 7 })] }]);
+      const client = new GitLabClient('glpat-token');
+
+      const prior = await client.listPriorPullRequests(REPO, ['src/a.ts'], {
+        excludeNumber: 42,
+        limit: 25,
+      });
+
+      expect(prior.map((p) => p.number)).toEqual([7]);
+    });
+
+    it('dedupes by MR iid, accumulating overlapping files across the commits/files that surfaced it', async () => {
+      mockFetchSequence([
+        { body: [{ id: 'c1' }] }, // commits for src/a.ts
+        { body: [mr({ iid: 5 })] }, // MRs for c1
+        { body: [{ id: 'c2' }] }, // commits for src/b.ts
+        { body: [mr({ iid: 5 })] }, // MRs for c2 — same MR, a different file
+      ]);
+      const client = new GitLabClient('glpat-token');
+
+      const prior = await client.listPriorPullRequests(REPO, ['src/a.ts', 'src/b.ts'], {
+        excludeNumber: 999,
+        limit: 25,
+      });
+
+      expect(prior).toHaveLength(1);
+      expect(prior[0]!.files).toEqual(['src/a.ts', 'src/b.ts']);
+      expect(prior[0]!.author).toBe('marisa');
+    });
+
+    it('only walks commit history for the first 10 changed files', async () => {
+      const files = Array.from({ length: 11 }, (_, i) => `src/file-${i}.ts`);
+      // 10 files × 1 "list commits" call each, all returning zero commits —
+      // so there is no follow-up "MRs for commit" call to also queue.
+      const { calls } = mockFetchSequence(Array.from({ length: 10 }, () => ({ body: [] })));
+      const client = new GitLabClient('glpat-token');
+
+      await client.listPriorPullRequests(REPO, files, { excludeNumber: 999, limit: 25 });
+
+      expect(calls).toHaveLength(10);
+      for (let i = 0; i < 10; i++) {
+        expect(decodeURIComponent(calls[i]!.url)).toContain(`path=src/file-${i}.ts`);
+      }
+      expect(calls.some((c) => decodeURIComponent(c.url).includes('file-10'))).toBe(false);
+    });
+
+    it('respects the candidate limit even when more merged MRs are found', async () => {
+      mockFetchSequence([
+        { body: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }] }, // 3 commits for one file
+        { body: [mr({ iid: 1 })] }, // MRs for c1
+        { body: [mr({ iid: 2 })] }, // MRs for c2
+        { body: [mr({ iid: 3 })] }, // MRs for c3
+      ]);
+      const client = new GitLabClient('glpat-token');
+
+      const prior = await client.listPriorPullRequests(REPO, ['src/a.ts'], {
+        excludeNumber: 999,
+        limit: 2,
+      });
+
+      expect(prior).toHaveLength(2);
+    });
+  });
 });
 
 /**

@@ -12,6 +12,7 @@ import type {
   OpenPrPayload,
   CommitFilesPayload,
   IssueMeta,
+  PriorPr,
 } from '@devdigest/shared';
 import { withRetry, withTimeout } from '../../platform/resilience.js';
 
@@ -23,6 +24,10 @@ const API_BASE = 'https://gitlab.com/api/v4';
 // value.
 const MAX_PAGINATED_ITEMS = 10_000;
 const PER_PAGE = 100;
+// Prior-PR history: how many of the MR's changed files to walk commit
+// history for, and how many recent commits per file.
+const PRIOR_PR_FILES = 10;
+const PRIOR_PR_COMMITS_PER_FILE = 10;
 
 /** GitLab MR "diff refs" — required to anchor an inline discussion note to a diff. */
 interface DiffRefs {
@@ -484,5 +489,46 @@ export class GitLabClient implements CodeHostClient {
   async currentLogin(): Promise<string> {
     const user = await this.request<{ username: string }>('/user');
     return user.username;
+  }
+
+  /**
+   * Walk commit history per file (up to `PRIOR_PR_FILES` of them) → the MRs
+   * associated with each commit — GitLab's equivalent of GitHub's "PRs
+   * associated with commit". Sequential across files/commits — best-effort
+   * "prior PRs" sidebar, not a hot path.
+   */
+  async listPriorPullRequests(
+    repo: RepoRef,
+    files: string[],
+    opts: { excludeNumber: number; limit: number },
+  ): Promise<PriorPr[]> {
+    const projectId = this.projectId(repo);
+    const byIid = new Map<number, PriorPr>();
+    for (const file of files.slice(0, PRIOR_PR_FILES)) {
+      const commits = await this.request<{ id: string }[]>(
+        `/projects/${projectId}/repository/commits?path=${encodeURIComponent(file)}&per_page=${PRIOR_PR_COMMITS_PER_FILE}`,
+      );
+      for (const commit of commits) {
+        const mrs = await this.request<
+          { iid: number; title: string; author: { username: string } | null; state: string; merged_at: string | null }[]
+        >(`/projects/${projectId}/repository/commits/${commit.id}/merge_requests`);
+        for (const mr of mrs) {
+          if (mr.state !== 'merged' || mr.iid === opts.excludeNumber) continue;
+          const existing = byIid.get(mr.iid);
+          if (existing) {
+            if (!existing.files.includes(file)) existing.files.push(file);
+          } else {
+            byIid.set(mr.iid, {
+              number: mr.iid,
+              title: mr.title,
+              author: mr.author?.username ?? 'unknown',
+              merged_at: mr.merged_at ?? '',
+              files: [file],
+            });
+          }
+        }
+      }
+    }
+    return [...byIid.values()].slice(0, opts.limit);
   }
 }

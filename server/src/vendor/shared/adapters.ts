@@ -140,6 +140,17 @@ export interface CommitFilesPayload {
   files: CommitFile[];
 }
 
+/** A prior merged PR/MR touching one of the same files ("Prior PRs" history). */
+export interface PriorPr {
+  number: number;
+  title: string;
+  author: string;
+  /** ISO timestamp the PR/MR was merged. */
+  merged_at: string;
+  /** Overlap with the queried file list — only the files this PR actually touched. */
+  files: string[];
+}
+
 /**
  * Provider-neutral code-host port. `OctokitGitHubClient` and `GitLabClient`
  * both implement this against their respective APIs; every consumer depends
@@ -169,6 +180,17 @@ export interface CodeHostClient {
   getIssue(repo: RepoRef, n: number): Promise<IssueMeta>;
   /** GET /user — for "posting as @user". */
   currentLogin(): Promise<string>;
+  /**
+   * Merged PRs/MRs (excluding `opts.excludeNumber`) that previously touched
+   * any of `files`, newest-overlap-first up to `opts.limit` — the "Prior PRs"
+   * history block. Best-effort: implementations should let network/API
+   * errors propagate; callers decide whether to degrade.
+   */
+  listPriorPullRequests(
+    repo: RepoRef,
+    files: string[],
+    opts: { excludeNumber: number; limit: number },
+  ): Promise<PriorPr[]>;
 }
 
 // ---------- Git (simple-git, heavy) ----------
