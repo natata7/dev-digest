@@ -26,13 +26,13 @@ Env: `DEVDIGEST_API_URL` (default `http://localhost:3001`), `DEVDIGEST_RUN_TIMEO
 | `src/format.ts` | domain (pure) | compact text for agents / findings / conventions, severity filter, limits, `MAX_CHARS` cap, `fence()` |
 | `src/api.ts` | infrastructure | the only `fetch`; error mapping to `ToolError`; `resolvePr` / `resolveRepo` / `resolveAgent` |
 
-Tools: `list_agents`, `run_agent_on_pr` (only write tool; blocks ≤120 s), `get_findings`, `get_conventions`, `get_blast_radius` (stub — always `isError` NOT IMPLEMENTED; homework target is `BlastRadius` in `server/src/vendor/shared/contracts/brief.ts`). Design + rationale: [docs/specs/04-spec-mcp-server](../docs/specs/04-spec-mcp-server/04-plan-mcp-server.md).
+Tools: `list_agents`, `run_agent_on_pr` (only write tool; blocks ≤120 s), `get_findings`, `get_conventions`, `get_blast_radius` (read-only; resolves the PR ref and calls `GET /pulls/:id/blast`; `response_format`: `concise` | `detailed` | `json`). Design + rationale: [docs/specs/04-spec-mcp-server](../docs/specs/04-spec-mcp-server/04-plan-mcp-server.md).
 
 ## Conventions (non-default)
 
 - **stdout is the protocol.** Log with `console.error` only (lint enforces `no-console` except `error`). Never run the server through `npm run` from a client config — npm banners on stdout break the handshake.
 - **Token budget.** Claude Code defers MCP schemas behind ToolSearch: tool name + first sentence of the description is what gets matched. Keep descriptions ≤2 sentences, inputs flat with enums/defaults, no `outputSchema` (it doubles the payload). `server.test.ts` guards the whole `tools/list` size.
-- **Output is compact text**, not JSON. Repo/LLM-authored text is always wrapped by `fence()` in `<untrusted source=…>`.
+- **Output is compact text**, not JSON. Repo/LLM-authored text is always wrapped by `fence()` in `<untrusted source=…>`. One deliberate exception: `get_blast_radius` `response_format: json` returns the `/pulls/:id/blast` body verbatim as JSON (still inside `fence()`, since symbol/route names are repo data) so the browser and Claude Code see the same payload.
 - **Errors the model can fix** → throw `ToolError` with the next step in the message ("call list_agents", "start ./scripts/dev.sh"). No stacks in tool output.
 - **Onion inside the package:** `run.ts` imports only types + `ToolError` from `api.ts`; `format.ts` imports only types. Tests for `run.ts` inject fakes — no global `fetch` stub needed there.
 
@@ -42,6 +42,7 @@ Tools: `list_agents`, `run_agent_on_pr` (only write tool; blocks ≤120 s), `get
 - The MCP shares the API's localhost rate limits with the web UI: 120 req/min global, 10 reviews/min. Polling is every 3 s (~40 req per 120 s run) and backs off on 429.
 - Tool-call timeout of the host (Claude Code `MCP_TOOL_TIMEOUT`) may be shorter than 120 s — then lower `DEVDIGEST_RUN_TIMEOUT_MS`; the run itself keeps going and `get_findings(run_id)` picks it up.
 - No prompt-injection **scanner** on findings/conventions — only fencing + a line in `instructions`. Known gap.
+- A Claude Code session started **before** a tool schema change (e.g. adding `get_blast_radius`) keeps the stdio server's old `tools/list` for the whole session — reconnect (`/mcp` → restart, or a fresh `claude`) to pick up new/changed tools.
 - This package uses **npm**, not pnpm.
 
 ## Do-not-touch

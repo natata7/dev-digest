@@ -118,7 +118,7 @@ describe('tools', () => {
     expect(text(r)).toContain('src/checkout.ts:42 (handleCheckout)');
   });
 
-  it('get_blast_radius response_format json returns the stub body verbatim', async () => {
+  it('get_blast_radius response_format json returns the stub body verbatim inside <untrusted>', async () => {
     const blast: BlastRadius = {
       changed_symbols: [],
       downstream: [],
@@ -127,7 +127,9 @@ describe('tools', () => {
     stubApi({ [`/pulls/${PR_ID}/blast`]: blast });
     const r = await client.callTool({ name: 'get_blast_radius', arguments: { pr: PR_ID, response_format: 'json' } });
     expect(r.isError).toBeFalsy();
-    expect(JSON.parse(text(r))).toEqual(blast);
+    const body = text(r);
+    expect(body.startsWith('<untrusted source="blast-radius">')).toBe(true);
+    expect(JSON.parse(body.split('\n')[1]!)).toEqual(blast);
   });
 
   it('get_blast_radius unknown PR (404) → isError naming the PR-not-found next step', async () => {

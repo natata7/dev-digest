@@ -1,6 +1,6 @@
 # @devdigest/mcp — local MCP server
 
-Exposes DevDigest to Claude Code over MCP (stdio): `list_agents`, `run_agent_on_pr`, `get_findings`, `get_conventions`, `get_blast_radius` (stub).
+Exposes DevDigest to Claude Code over MCP (stdio): `list_agents`, `run_agent_on_pr`, `get_findings`, `get_conventions`, `get_blast_radius` (PR impact map — callers, endpoints, crons).
 
 **Opt-in, never automatic.** There is no `/.mcp.json`, and `scripts/dev.sh` does not start it. A stdio MCP server isn't a long-running process: Claude Code spawns it per session **only if you registered it**. You register it when you need it and remove it when you don't.
 

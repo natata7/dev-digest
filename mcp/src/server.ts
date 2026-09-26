@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Agent, BlastRadius, ConventionList, ReviewDto, RunDetail } from '@devdigest/shared';
 import { ToolError, api, resolveAgent, resolvePr, resolveRepo } from './api.js';
-import { cap, formatAgents, formatBlast, formatConventions, formatReview } from './format.js';
+import { cap, fence, formatAgents, formatBlast, formatConventions, formatReview } from './format.js';
 import { sleep, startAndWait } from './run.js';
 
 /**
@@ -232,7 +232,7 @@ export function createServer(): McpServer {
           }
           throw err;
         });
-        if (args.response_format === 'json') return JSON.stringify(blast);
+        if (args.response_format === 'json') return fence('blast-radius', JSON.stringify(blast));
         return [`PR ${label}`, formatBlast(blast, args.response_format)].join('\n');
       }),
   );

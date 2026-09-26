@@ -1,7 +1,7 @@
 # Task 3 Proofs – `get_blast_radius` MCP tool returns the same map as the UI
 
 ## Task Summary
-The lab stub in `mcp/src/server.ts` is replaced by a real read-only tool: it resolves the PR ref, calls `GET /pulls/:id/blast` and returns either a compact text tree (`concise` / `detailed`) or the route body verbatim (`json`).
+The lab stub in `mcp/src/server.ts` is replaced by a real read-only tool: it resolves the PR ref, calls `GET /pulls/:id/blast` and returns either a compact text tree (`concise` / `detailed`) or the route body verbatim as JSON inside `<untrusted>` (`json`; fenced after the architecture review because symbol/route names are repo data).
 
 ## What This Task Proves
 - Claude Code gets the same symbols, callers and endpoints as the browser block.
@@ -41,7 +41,7 @@ bucketKey()
 
 ## Artifact: `response_format: json` and unknown PR
 
-**Result summary:** `json` returns the exact route body (same as `blast-curl.json`); an all-zero uuid returns:
+**Result summary:** `json` returns the exact route body (same as `blast-curl.json`), wrapped in `<untrusted source="blast-radius">`; an all-zero uuid returns:
 
 ```
 { "content": [{ "type": "text", "text": "PR not found — pass owner/repo#number, a PR URL or a DevDigest PR uuid" }], "isError": true }

@@ -130,7 +130,7 @@ Spec: [06-spec-blast-radius.md](./06-spec-blast-radius.md)
 - [x] 5.6 Client: `usePrHistory(prId)` in `hooks/blast.ts` with `staleTime: Infinity` (merged history doesn't change within a session); `PriorPrs.tsx` collapsible row with count chip at the bottom of the card; items link via `repoPrUrl(provider, repoFullName, number)` and show title, author, date, overlapping files; add `prior.*` keys to `blast.json`.
 - [x] 5.7 RTL tests for Prior PRs (count, expand, GitHub/GitLab links, empty); run server + client verify; capture `prior-prs.png`.
 
-### [ ] 6.0 Delivery: docs, full verification, PR with demo
+### [~] 6.0 Delivery: docs, full verification, PR with demo
 
 #### 6.0 Proof Artifact(s)
 - CLI: `server`/`client` `pnpm typecheck && pnpm lint` + tests, `mcp` `npm run typecheck && npm run lint && npm test` — all green (output summarized in PR description).
@@ -138,7 +138,7 @@ Spec: [06-spec-blast-radius.md](./06-spec-blast-radius.md)
 - URL: open GitHub PR (branch off `L04`) with implementation description, demo video link, and a "which subagent did what" section.
 
 #### 6.0 Tasks
-- [ ] 6.1 Update `mcp/AGENTS.md` (tools line + note in "Output is compact text" that `get_blast_radius` `response_format: json` is the one deliberate JSON exception), `mcp/README.md`, `server/AGENTS.md` map; run `engineering-insights` for server/client/mcp and add entries only if substantial.
-- [ ] 6.2 Run the full verify matrix for `server`, `client`, `mcp`; fix any failures.
+- [x] 6.1 Update `mcp/AGENTS.md` (tools line + note in "Output is compact text" that `get_blast_radius` `response_format: json` is the one deliberate JSON exception), `mcp/README.md`, `server/AGENTS.md` map; run `engineering-insights` for server/client/mcp and add entries only if substantial.
+- [x] 6.2 Run the full verify matrix for `server`, `client`, `mcp`; fix any failures.
 - [ ] 6.3 Record the demo video (Overview tree → click caller → degraded + Resync → Graph → Prior PRs → Claude Code `get_blast_radius`).
 - [ ] 6.4 Commit with `feat:` prefixes, push branch, open PR: summary, per-unit changes, proof artifact links, demo link, subagent attribution table.
