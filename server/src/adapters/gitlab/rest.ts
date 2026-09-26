@@ -17,6 +17,12 @@ import { withRetry, withTimeout } from '../../platform/resilience.js';
 
 const TIMEOUT = 30_000;
 const API_BASE = 'https://gitlab.com/api/v4';
+// GitLab's REST API hard-caps per_page at 100 regardless of what's
+// requested — fetching more means following pages, not raising per_page.
+// This is a safety ceiling on the total across all pages, not a per-request
+// value.
+const MAX_PAGINATED_ITEMS = 10_000;
+const PER_PAGE = 100;
 
 /** GitLab MR "diff refs" — required to anchor an inline discussion note to a diff. */
 interface DiffRefs {
@@ -83,6 +89,22 @@ export class GitLabClient implements CodeHostClient {
     );
   }
 
+  /**
+   * Follows `page` across all pages of a list endpoint, up to
+   * MAX_PAGINATED_ITEMS total — GitLab won't hand back more than PER_PAGE
+   * items in a single response no matter what `per_page` is set to.
+   */
+  private async requestAllPages<T>(basePath: string): Promise<T[]> {
+    const sep = basePath.includes('?') ? '&' : '?';
+    const results: T[] = [];
+    for (let page = 1; results.length < MAX_PAGINATED_ITEMS; page++) {
+      const batch = await this.request<T[]>(`${basePath}${sep}per_page=${PER_PAGE}&page=${page}`);
+      results.push(...batch);
+      if (batch.length < PER_PAGE) break; // last page
+    }
+    return results.slice(0, MAX_PAGINATED_ITEMS);
+  }
+
   /** `owner/name` → the URL-encoded project path GitLab accepts as `:id`. */
   private projectId(repo: RepoRef): string {
     return encodeURIComponent(`${repo.owner}/${repo.name}`);
@@ -139,11 +161,11 @@ export class GitLabClient implements CodeHostClient {
   async getPullRequest(repo: RepoRef, n: number): Promise<PrDetail> {
     const [mr, diffs, commits] = await Promise.all([
       this.getMrDetail(repo, n),
-      this.request<{ old_path: string; new_path: string; diff: string; deleted_file: boolean }[]>(
-        `/projects/${this.projectId(repo)}/merge_requests/${n}/diffs?per_page=100`,
+      this.requestAllPages<{ old_path: string; new_path: string; diff: string; deleted_file: boolean }>(
+        `/projects/${this.projectId(repo)}/merge_requests/${n}/diffs`,
       ),
-      this.request<{ id: string; message: string; author_name: string; authored_date: string }[]>(
-        `/projects/${this.projectId(repo)}/merge_requests/${n}/commits?per_page=100`,
+      this.requestAllPages<{ id: string; message: string; author_name: string; authored_date: string }>(
+        `/projects/${this.projectId(repo)}/merge_requests/${n}/commits`,
       ),
     ]);
 
@@ -286,24 +308,22 @@ export class GitLabClient implements CodeHostClient {
   }
 
   async listReviewComments(repo: RepoRef, n: number): Promise<PrReviewComment[]> {
-    const discussions = await this.request<
-      {
-        id: string;
-        notes: {
-          id: number;
-          body: string;
-          author: { username: string } | null;
-          created_at: string;
-          resolvable: boolean;
-          position?: {
-            new_path: string;
-            old_path: string;
-            new_line: number | null;
-            old_line: number | null;
-          } | null;
-        }[];
-      }[]
-    >(`/projects/${this.projectId(repo)}/merge_requests/${n}/discussions?per_page=100`);
+    const discussions = await this.requestAllPages<{
+      id: string;
+      notes: {
+        id: number;
+        body: string;
+        author: { username: string } | null;
+        created_at: string;
+        resolvable: boolean;
+        position?: {
+          new_path: string;
+          old_path: string;
+          new_line: number | null;
+          old_line: number | null;
+        } | null;
+      }[];
+    }>(`/projects/${this.projectId(repo)}/merge_requests/${n}/discussions`);
 
     const webUrl = `https://gitlab.com/${repo.owner}/${repo.name}/-/merge_requests/${n}`;
     const out: PrReviewComment[] = [];

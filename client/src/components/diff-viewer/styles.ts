@@ -64,6 +64,15 @@ export const s = {
     color: "var(--text-primary)",
     paddingRight: 12,
   } satisfies CSSProperties,
+  /** Header dot indicating a file has ≥1 finding (no count, unlike the
+   *  comment-count badge next to it). */
+  findingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: "var(--danger, #e5484d)",
+    flexShrink: 0,
+  } satisfies CSSProperties,
 } as const;
 
 /** Chevron rotates 90deg when the file card is open. */
@@ -87,6 +96,26 @@ export function lineSignFor(kind: Line["kind"]): CSSProperties {
     width: 14,
     textAlign: "center",
     color: kind === "add" ? "var(--code-add-text)" : kind === "del" ? "var(--code-del-text)" : "var(--text-muted)",
+    flexShrink: 0,
+  };
+}
+
+/** Left-border stripe marking a line with a finding — per-side longhands
+ *  only, never combined with the shorthand `border`/`borderColor` (see
+ *  client/INSIGHTS.md). */
+export function lineSeverityStripe(color: string): CSSProperties {
+  return { borderLeftWidth: 3, borderLeftStyle: "solid", borderLeftColor: color };
+}
+
+/** "blocker"/"warning"/"suggestion" label to the right of a flagged line. */
+export function severityRowLabelFor(color: string): CSSProperties {
+  return {
+    fontSize: 11,
+    fontWeight: 600,
+    color,
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+    marginLeft: 10,
     flexShrink: 0,
   };
 }

@@ -18,6 +18,8 @@ import {
   AgentSkillLink,
   Skill,
   SkillSource,
+  SkillScanResult,
+  SkillImportPreview,
   ConventionStatus,
   ConventionCandidate,
   ConventionList,
@@ -199,6 +201,27 @@ describe('SkillSource', () => {
         version: 1,
       }).source,
     ).toBe('imported');
+  });
+});
+
+describe('SkillScanResult / SkillImportPreview.scan', () => {
+  it('round-trips a valid scan result', () => {
+    const scan = SkillScanResult.parse({
+      severity: 'suspicious',
+      findings: [{ rule: 'system-prompt-mention', severity: 'suspicious', excerpt: 'the system prompt says…' }],
+      llm_checked: true,
+    });
+    expect(scan.severity).toBe('suspicious');
+    expect(scan.findings).toHaveLength(1);
+  });
+
+  it('SkillImportPreview still parses without a scan field (backward compat)', () => {
+    const preview = SkillImportPreview.parse({
+      name: 'flaky-tests',
+      description: 'Flag flaky tests.',
+      body: '# Flaky tests',
+    });
+    expect(preview.scan).toBeUndefined();
   });
 });
 

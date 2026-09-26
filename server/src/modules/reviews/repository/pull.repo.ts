@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { Db } from '../../../db/client.js';
 import * as t from '../../../db/schema.js';
-import type { Intent } from '@devdigest/shared';
+import type { Intent, IntentSource, PrIntentRecord } from '@devdigest/shared';
 import type { PullRow, RepoRow } from '../../../db/rows.js';
 
 // ---- PR lookup (workspace-scoped) -----------------------------------------
@@ -41,25 +41,51 @@ export async function markReviewed(db: Db, prId: string, sha: string): Promise<v
     .where(eq(t.pullRequests.id, prId));
 }
 
-// ---- intent ---------------------------------------------------------------
+// ---- intent -----------------------------------------------------------
 
-export async function upsertIntent(db: Db, prId: string, intent: Intent): Promise<void> {
-  await db
-    .insert(t.prIntent)
-    .values({
-      prId,
-      intent: intent.intent,
-      inScope: intent.in_scope,
-      outOfScope: intent.out_of_scope,
-    })
-    .onConflictDoUpdate({
-      target: t.prIntent.prId,
-      set: { intent: intent.intent, inScope: intent.in_scope, outOfScope: intent.out_of_scope },
-    });
+export interface IntentMeta {
+  /** The PR's head_sha at computation time (staleness check on read). */
+  headSha: string;
+  provider: string;
+  model: string;
 }
 
-export async function getIntent(db: Db, prId: string): Promise<Intent | undefined> {
+export async function upsertIntent(
+  db: Db,
+  prId: string,
+  intent: Intent,
+  meta: IntentMeta,
+): Promise<void> {
+  const values = {
+    intent: intent.intent,
+    inScope: intent.in_scope,
+    outOfScope: intent.out_of_scope,
+    confidence: intent.confidence,
+    sources: intent.sources,
+    headSha: meta.headSha,
+    provider: meta.provider,
+    model: meta.model,
+    computedAt: new Date(),
+  };
+  await db
+    .insert(t.prIntent)
+    .values({ prId, ...values })
+    .onConflictDoUpdate({ target: t.prIntent.prId, set: values });
+}
+
+export async function getIntent(db: Db, prId: string): Promise<PrIntentRecord | undefined> {
   const [row] = await db.select().from(t.prIntent).where(eq(t.prIntent.prId, prId));
   if (!row) return undefined;
-  return { intent: row.intent, in_scope: row.inScope, out_of_scope: row.outOfScope };
+  return {
+    pr_id: row.prId,
+    intent: row.intent,
+    in_scope: row.inScope,
+    out_of_scope: row.outOfScope,
+    confidence: row.confidence as Intent['confidence'],
+    sources: (row.sources as IntentSource[]) ?? [],
+    head_sha: row.headSha,
+    provider: row.provider,
+    model: row.model,
+    computed_at: row.computedAt?.toISOString() ?? null,
+  };
 }

@@ -179,6 +179,48 @@ describe('GitLabClient', () => {
     expect(comments[0]).toMatchObject({ id: 101, path: 'src/config.ts', line: 5, side: 'RIGHT', is_outdated: false });
   });
 
+  it('follows pagination past the first page when the first page is full', async () => {
+    // GitLab hands back at most PER_PAGE (100) items per page — a 101st
+    // discussion only shows up if requestAllPages() actually follows `page`
+    // instead of trusting the first response.
+    const fullPage = Array.from({ length: 100 }, (_, i) => ({
+      id: `disc-${i}`,
+      notes: [
+        {
+          id: i,
+          body: `note ${i}`,
+          author: { username: 'marisa' },
+          created_at: '2026-06-01T00:00:00Z',
+          resolvable: true,
+          position: { new_path: 'src/config.ts', old_path: 'src/config.ts', new_line: i, old_line: null },
+        },
+      ],
+    }));
+    const secondPage = [
+      {
+        id: 'disc-100',
+        notes: [
+          {
+            id: 100,
+            body: 'note 100',
+            author: { username: 'marisa' },
+            created_at: '2026-06-01T00:00:00Z',
+            resolvable: true,
+            position: { new_path: 'src/config.ts', old_path: 'src/config.ts', new_line: 100, old_line: null },
+          },
+        ],
+      },
+    ];
+    const { calls } = mockFetchSequence([{ body: fullPage }, { body: secondPage }]);
+    const client = new GitLabClient('glpat-token');
+    const comments = await client.listReviewComments(REPO, 12);
+
+    expect(comments).toHaveLength(101);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]!.url).toContain('page=1');
+    expect(calls[1]!.url).toContain('page=2');
+  });
+
   it('creates a new inline comment by fetching diff_refs then posting a discussion', async () => {
     const { calls } = mockFetchSequence([
       { body: { iid: 12, diff_refs: { base_sha: 'b', start_sha: 's', head_sha: 'h' } } }, // getMrDetail

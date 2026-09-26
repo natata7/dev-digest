@@ -93,11 +93,25 @@ export function usePreviewSkillImport() {
   });
 }
 
+export function usePreviewSkillImportFromUrl() {
+  return useMutation({
+    mutationFn: (input: { url: string }) =>
+      api.post<SkillImportPreview>("/skills/import/url/preview", input),
+  });
+}
+
+export interface ConfirmSkillImportInput {
+  name: string;
+  description: string;
+  type: SkillType;
+  body: string;
+  source_url?: string;
+}
+
 export function useConfirmSkillImport() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { name: string; description: string; type: SkillType; body: string }) =>
-      api.post<Skill>("/skills/import", input),
+    mutationFn: (input: ConfirmSkillImportInput) => api.post<Skill>("/skills/import", input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["skills"] }),
   });
 }

@@ -4,15 +4,17 @@
 
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, API_BASE } from "../api";
+import { api, API_BASE, ApiError } from "../api";
 import { notify } from "../toast";
 import type {
   FindingActionKind,
+  PrIntentRecord,
   PrReviewComment,
   ReviewRecord,
   ReviewRunResponse,
   RunEvent,
   RunSummary,
+  SmartDiffResponse,
 } from "@devdigest/shared";
 
 // ---- Active (in-flight) runs — server-side source of truth ----
@@ -52,6 +54,19 @@ export function usePrReviews(prId: string | null | undefined) {
   return useQuery({
     queryKey: ["reviews", prId],
     queryFn: () => api.get<ReviewRecord[]>(`/pulls/${prId}/reviews`),
+    enabled: !!prId,
+  });
+}
+
+// ---- Smart Diff: files grouped by role, with finding lines ----
+/** Files-changed grouped by role (core/tests/wiring/docs/boilerplate) + per-file
+   finding line numbers. Read-only, no LLM call. Findings themselves come from
+   the separate `["reviews", prId]` query, which `useRunReview` already
+   invalidates — no extra cache wiring needed here. */
+export function useSmartDiff(prId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["smart-diff", prId],
+    queryFn: () => api.get<SmartDiffResponse>(`/pulls/${prId}/smart-diff`),
     enabled: !!prId,
   });
 }
@@ -213,4 +228,32 @@ export function useRunEvents(runIds: string[]) {
   }, [key]);
 
   return { events, running };
+}
+
+// ---- Intent Layer: the PR's persisted Intent (title/description/linked
+// issue/spec/files → why this PR exists, before review) ----
+
+/** The persisted Intent for a PR, or `null` if never computed (404). */
+export function usePrIntent(prId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["pr-intent", prId],
+    queryFn: async () => {
+      try {
+        return await api.get<PrIntentRecord>(`/pulls/${prId}/intent`);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null;
+        throw e;
+      }
+    },
+    enabled: !!prId,
+  });
+}
+
+/** Force-recompute the Intent (e.g. the "PR updated" banner's Recompute button). */
+export function useRecomputeIntent(prId: string | null | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<PrIntentRecord>(`/pulls/${prId}/intent`),
+    onSuccess: (data) => qc.setQueryData(["pr-intent", prId], data),
+  });
 }

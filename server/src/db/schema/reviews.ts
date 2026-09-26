@@ -9,6 +9,7 @@ import {
   doublePrecision,
   index,
 } from 'drizzle-orm/pg-core';
+import type { IntentSource } from '@devdigest/shared';
 import { now } from './_shared';
 import { workspaces } from './core';
 import { pullRequests } from './pulls';
@@ -82,6 +83,15 @@ export const prIntent = pgTable('pr_intent', {
   intent: text('intent').notNull(),
   inScope: jsonb('in_scope').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
   outOfScope: jsonb('out_of_scope').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+  // `{ enum }` is a TS-level narrowing only — no DB CHECK constraint (see
+  // INSIGHTS.md 2026-09-18). Runtime enforcement is the Zod `IntentConfidence`.
+  confidence: text('confidence', { enum: ['high', 'medium', 'low'] }).notNull().default('medium'),
+  sources: jsonb('sources').$type<IntentSource[]>().notNull().default(sql`'[]'::jsonb`),
+  /** head_sha the PR was at when this intent was computed — staleness check. */
+  headSha: text('head_sha'),
+  provider: text('provider'),
+  model: text('model'),
+  computedAt: timestamp('computed_at', { withTimezone: true }).defaultNow(),
 });
 
 export const prBrief = pgTable('pr_brief', {

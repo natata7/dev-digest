@@ -1,0 +1,83 @@
+import type { CSSProperties } from "react";
+
+export const s = {
+  card: {
+    border: "1px solid var(--border)",
+    borderRadius: 8,
+    background: "var(--bg-elevated)",
+    padding: 18,
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+  } satisfies CSSProperties,
+  header: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  } satisfies CSSProperties,
+  quote: {
+    borderLeft: "3px solid var(--accent)",
+    paddingLeft: 12,
+    fontSize: 14,
+    color: "var(--text-primary)",
+    lineHeight: 1.55,
+    fontStyle: "italic",
+  } satisfies CSSProperties,
+  columns: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 16,
+  } satisfies CSSProperties,
+  columnTitle: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    color: "var(--text-muted)",
+    marginBottom: 8,
+  } satisfies CSSProperties,
+  list: {
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  } satisfies CSSProperties,
+  listItem: {
+    fontSize: 13,
+    color: "var(--text-secondary)",
+    lineHeight: 1.5,
+  } satisfies CSSProperties,
+  empty: {
+    fontSize: 13,
+    color: "var(--text-muted)",
+    fontStyle: "italic",
+  } satisfies CSSProperties,
+  sourceRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+  } satisfies CSSProperties,
+  footer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  } satisfies CSSProperties,
+  banner: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "8px 12px",
+    borderRadius: 6,
+    background: "var(--warn-bg)",
+    color: "var(--warn)",
+    fontSize: 13,
+  } satisfies CSSProperties,
+} as const;

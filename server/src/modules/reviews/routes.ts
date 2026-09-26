@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { RunRequest, ReviewDto } from '@devdigest/shared';
+import { RunRequest, ReviewDto, PrIntentRecord, SmartDiffResponse } from '@devdigest/shared';
 import type { RunEvent } from '@devdigest/shared';
 import { getContext } from '../_shared/context.js';
 import { IdParams } from '../_shared/schemas.js';
@@ -14,7 +14,10 @@ import { ReviewService } from './service.js';
  *   GET    /runs/:id/events                            → SSE stream of RunEvent (replay-first)
  *   GET    /runs/:id/trace                             → the single-document RunTrace
  *   GET    /pulls/:id/reviews                          → persisted reviews + findings for a PR
+ *   GET    /pulls/:id/smart-diff                       → files grouped by role, with finding lines
  *   POST   /findings/:id/(accept|dismiss)              → finding actions
+ *   GET    /pulls/:id/intent                           → the PR's persisted Intent, or 404
+ *   POST   /pulls/:id/intent                           → force-recompute the Intent
  */
 const FINDING_ACTIONS = ['accept', 'dismiss'] as const;
 export default async function reviewsRoutes(appBase: FastifyInstance) {
@@ -143,6 +146,16 @@ export default async function reviewsRoutes(appBase: FastifyInstance) {
     },
   );
 
+  // ---- Smart Diff: files grouped by role + finding lines (read-only, no LLM) -
+  app.get(
+    '/pulls/:id/smart-diff',
+    { schema: { params: IdParams, response: { 200: SmartDiffResponse } } },
+    async (req) => {
+      const { workspaceId } = await getContext(container, req);
+      return service.smartDiff(workspaceId, req.params.id);
+    },
+  );
+
   // ---- Delete a whole review run (one agent's pass) + its findings --------
   app.delete('/reviews/:id', { schema: { params: IdParams } }, async (req) => {
     const { workspaceId } = await getContext(container, req);
@@ -150,6 +163,32 @@ export default async function reviewsRoutes(appBase: FastifyInstance) {
     if (!ok) throw new NotFoundError('Review not found');
     return { ok: true };
   });
+
+  // ---- Intent Layer ---------------------------------------------------------
+  app.get(
+    '/pulls/:id/intent',
+    { schema: { params: IdParams, response: { 200: PrIntentRecord } } },
+    async (req) => {
+      const { workspaceId } = await getContext(container, req);
+      const intent = await service.getIntent(workspaceId, req.params.id);
+      if (!intent) throw new NotFoundError('Intent not computed for this PR');
+      return intent;
+    },
+  );
+
+  // Force-recompute (e.g. "PR updated since" → Recompute). Same tight
+  // per-route rate limit as /pulls/:id/review — both fan out to an LLM call.
+  app.post(
+    '/pulls/:id/intent',
+    {
+      schema: { params: IdParams, response: { 200: PrIntentRecord } },
+      config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+    },
+    async (req) => {
+      const { workspaceId } = await getContext(container, req);
+      return service.computeIntent(workspaceId, req.params.id, { force: true }, req.log);
+    },
+  );
 
   // ---- Finding actions (accept / dismiss) ---------------------------------
   for (const action of FINDING_ACTIONS) {

@@ -22,8 +22,8 @@ export const FEATURE_MODELS: FeatureModelDef[] = [
     id: "review_intent",
     label: "PR Review · Intent",
     description: "Derives a PR’s intent and scope before review.",
-    defaultProvider: "openai",
-    defaultModel: "gpt-4.1",
+    defaultProvider: "openrouter",
+    defaultModel: "google/gemini-2.5-flash-lite",
   },
   {
     id: "risk_brief",
@@ -45,5 +45,12 @@ export const FEATURE_MODELS: FeatureModelDef[] = [
     description: "Extracts coding conventions from the repo.",
     defaultProvider: "openai",
     defaultModel: "gpt-5.4",
+  },
+  {
+    id: "skill_scan",
+    label: "Skill Import · Scan",
+    description: "Best-effort deep scan for prompt-injection in imported skills.",
+    defaultProvider: "openrouter",
+    defaultModel: "google/gemini-2.5-flash-lite",
   },
 ];

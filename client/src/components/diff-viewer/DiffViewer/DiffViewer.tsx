@@ -8,15 +8,22 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import type { PrFile } from "@/lib/types";
 import { type DiffCommentApi } from "../comments";
+import { type DiffFindingApi } from "../findings";
 import { s } from "../styles";
 import { FileCard } from "../FileCard";
 
 export function DiffViewer({
   files,
   commenting,
+  findings,
+  defaultOpen,
 }: {
   files: PrFile[];
   commenting?: DiffCommentApi;
+  findings?: DiffFindingApi;
+  /** Overrides each file's own "open if small enough" default (used by
+   *  DiffTab's grouped view, e.g. to start docs/boilerplate groups collapsed). */
+  defaultOpen?: boolean;
 }) {
   const t = useTranslations("shell");
   if (!files || files.length === 0) {
@@ -25,7 +32,7 @@ export function DiffViewer({
   return (
     <div style={s.list}>
       {files.map((f) => (
-        <FileCard key={f.path} file={f} commenting={commenting} />
+        <FileCard key={f.path} file={f} commenting={commenting} findings={findings} defaultOpen={defaultOpen} />
       ))}
     </div>
   );

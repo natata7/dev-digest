@@ -13,8 +13,9 @@ import { SkillImportError } from './import.js';
  *   GET    /skills       → list (workspace-scoped)
  *   GET    /skills/:id   → one skill
  *   POST   /skills       → create (source = manual)
- *   POST   /skills/import/preview → parse upload, no persist
- *   POST   /skills/import         → confirm imported skill (enabled = false)
+ *   POST   /skills/import/preview     → parse upload, no persist
+ *   POST   /skills/import/url/preview → fetch (SSRF-safe) + parse a URL, no persist
+ *   POST   /skills/import             → confirm imported skill (enabled = false)
  *   PUT    /skills/:id   → update / toggle enabled (versions body on config change)
  *   DELETE /skills/:id   → delete (versions + agent_skills cascade)
  *   GET    /skills/:id/versions          → snapshots (newest first)
@@ -42,11 +43,16 @@ const ImportPreviewBody = z.object({
   content_base64: z.string().min(1),
 });
 
+const UrlImportPreviewBody = z.object({
+  url: z.string().url(),
+});
+
 const ConfirmImportBody = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
   type: SkillType,
   body: z.string().min(1),
+  source_url: z.string().url().optional(),
 });
 
 const UpdateSkillBody = z.object({
@@ -95,19 +101,39 @@ export default async function skillsRoutes(appBase: FastifyInstance) {
   });
 
   app.post('/skills/import/preview', { schema: { body: ImportPreviewBody } }, async (req) => {
+    const { workspaceId } = await getContext(app.container, req);
     const { filename, content_base64 } = req.body;
     try {
-      return service.previewImport(filename, bytesFromBase64(content_base64));
+      return await service.previewImport(workspaceId, filename, bytesFromBase64(content_base64));
     } catch (err) {
       throwImport(err);
     }
   });
 
+  // The only route that makes the server fetch a URL an attacker can influence
+  // (the skill body itself) — tighter rate limit than the app-wide default.
+  app.post(
+    '/skills/import/url/preview',
+    { schema: { body: UrlImportPreviewBody }, config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    async (req) => {
+      const { workspaceId } = await getContext(app.container, req);
+      try {
+        return await service.previewImportFromUrl(workspaceId, req.body.url);
+      } catch (err) {
+        throwImport(err);
+      }
+    },
+  );
+
   app.post('/skills/import', { schema: { body: ConfirmImportBody } }, async (req, reply) => {
     const { workspaceId } = await getContext(app.container, req);
-    const skill = await service.confirmImport(workspaceId, req.body);
-    reply.status(201);
-    return skill;
+    try {
+      const skill = await service.confirmImport(workspaceId, req.body);
+      reply.status(201);
+      return skill;
+    } catch (err) {
+      throwImport(err);
+    }
   });
 
   app.put(

@@ -64,3 +64,54 @@ describe('assemblePrompt — ## PR description', () => {
     expect((assembly.pr_description as string).length).toBe(4000);
   });
 });
+
+describe('assemblePrompt — ## Declared intent & scope (Intent Layer)', () => {
+  it('renders the section + SCOPE_POLICY, right after PR description', () => {
+    const { messages, assembly } = assemblePrompt({
+      system: 'sys',
+      diff: 'DIFF',
+      prDescription: 'Adds rate limiting.',
+      intent: 'Intent: add rate limiting\n\nIn scope:\n- limiter middleware',
+    });
+    const [system, user] = [messages[0]!.content, messages[1]!.content];
+
+    expect(user).toContain('## Declared intent & scope');
+    expect(user).toContain('<untrusted source="intent">');
+    expect(user).toContain('limiter middleware');
+    expect(user.indexOf('## PR description')).toBeLessThan(user.indexOf('## Declared intent & scope'));
+    expect(user.indexOf('## Declared intent & scope')).toBeLessThan(user.indexOf('## Diff to review'));
+
+    // SCOPE_POLICY is subordinate to INJECTION_GUARD, never overrides it.
+    expect(system).toMatch(/SCOPE POLICY/);
+    expect(system).toMatch(/subordinate to the SECURITY rule/i);
+    expect(system).toMatch(/never justify hiding, downgrading, or ignoring/i);
+    expect(system.indexOf('SECURITY')).toBeLessThan(system.indexOf('SCOPE POLICY'));
+
+    // A genuine WARNING/CRITICAL defect must NEVER be suppressible by declared
+    // scope — only SUGGESTION-level style nits may be left out. This is the
+    // exact contradiction an architecture review caught in an earlier wording
+    // (a "report at most one CRITICAL out-of-scope finding" carve-out silently
+    // permitted dropping real WARNING findings and extra CRITICAL ones).
+    expect(system).toMatch(/WARNING or CRITICAL.*ALWAYS reported/is);
+    expect(system).toMatch(/never omit, downgrade, or merge it away/i);
+    expect(system).toMatch(/ONLY findings scope may let you leave out are low-signal SUGGESTION/i);
+    expect(system).not.toMatch(/at most one/i);
+
+    expect(assembly.intent).toBe(
+      'Intent: add rate limiting\n\nIn scope:\n- limiter middleware',
+    );
+  });
+
+  it('omits both the section and SCOPE_POLICY when intent is absent — byte-identical to pre-Intent-Layer prompt', () => {
+    const withoutIntent = assemblePrompt({ system: 'sys', diff: 'DIFF' });
+    const explicitlyEmpty = assemblePrompt({ system: 'sys', diff: 'DIFF', intent: '   ' });
+
+    for (const { messages, assembly } of [withoutIntent, explicitlyEmpty]) {
+      expect(messages[1]!.content).not.toContain('## Declared intent & scope');
+      expect(messages[0]!.content).not.toMatch(/SCOPE POLICY/);
+      expect(assembly.intent ?? null).toBeNull();
+    }
+    expect(withoutIntent.messages[0]!.content).toBe(explicitlyEmpty.messages[0]!.content);
+    expect(withoutIntent.messages[1]!.content).toBe(explicitlyEmpty.messages[1]!.content);
+  });
+});

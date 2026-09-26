@@ -3,9 +3,12 @@
 "use client";
 
 import React from "react";
+import type { FindingRecord } from "@devdigest/shared";
+import { SEV } from "@devdigest/ui";
 import { commentTargetFor, type CommentThread, type DiffCommentApi, cs } from "../comments";
+import { type DiffFindingApi, topSeverityFinding, rowSeverityLabel } from "../findings";
 import { type Line } from "../helpers";
-import { s, lineRowFor, lineSignFor } from "../styles";
+import { s, lineRowFor, lineSignFor, lineSeverityStripe, severityRowLabelFor } from "../styles";
 import { CommentThreadView } from "../CommentThreadView";
 import { InlineComposer } from "../InlineComposer";
 
@@ -14,11 +17,15 @@ export function CodeLine({
   path,
   threads,
   commenting,
+  findings,
+  findingApi,
 }: {
   ln: Line;
   path: string;
   threads: CommentThread[];
   commenting?: DiffCommentApi;
+  findings?: FindingRecord[];
+  findingApi?: DiffFindingApi;
 }) {
   const [hover, setHover] = React.useState(false);
   const [composing, setComposing] = React.useState(false);
@@ -35,13 +42,16 @@ export function CodeLine({
   const target = commenting?.canComment ? commentTargetFor(ln) : null;
   const showAdd = hover && !!target && !composing;
 
+  const flagged = findingApi?.show ? topSeverityFinding(findings ?? []) : undefined;
+  const sevColor = flagged ? SEV[flagged.severity].c : undefined;
+
   return (
     <div
       style={cs.rowWrap}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div style={lineRowFor(ln.kind)}>
+      <div style={{ ...lineRowFor(ln.kind), ...(sevColor ? lineSeverityStripe(sevColor) : {}) }}>
         <span className="mono tnum" style={{ ...s.lineNo, position: "relative" }}>
           {showAdd && target && (
             <button
@@ -62,6 +72,9 @@ export function CodeLine({
         <span className="mono" style={s.lineText}>
           {ln.text || " "}
         </span>
+        {flagged && sevColor && (
+          <span style={severityRowLabelFor(sevColor)}>{rowSeverityLabel(flagged.severity)}</span>
+        )}
       </div>
 
       {commenting &&
@@ -69,6 +82,14 @@ export function CodeLine({
         threads.map((th) => (
           <CommentThreadView key={th.rootId} thread={th} commenting={commenting} path={path} />
         ))}
+
+      {findingApi && findingApi.show && findings && findings.length > 0 && (
+        <div style={cs.thread}>
+          {findings.map((f) => (
+            <React.Fragment key={f.id}>{findingApi.render(f)}</React.Fragment>
+          ))}
+        </div>
+      )}
 
       {commenting && composing && target && (
         <InlineComposer

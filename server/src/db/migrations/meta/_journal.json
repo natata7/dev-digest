@@ -120,6 +120,13 @@
       "when": 1789768301376,
       "tag": "0016_happy_doctor_faustus",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789994047707,
+      "tag": "0017_fast_sumo",
+      "breakpoints": true
     }
   ]
 }

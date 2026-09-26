@@ -38,7 +38,17 @@
     "pickFile": "Choose a .md, .zip, or .skill file",
     "confirm": "Confirm import",
     "confirming": "Saving…",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "tabFile": "File",
+    "tabUrl": "URL",
+    "urlLabel": "Skill URL",
+    "urlPlaceholder": "https://example.com/skills/SKILL.md",
+    "urlFetch": "Fetch",
+    "urlFetching": "Fetching…",
+    "scanCleanNote": "No injection patterns detected.",
+    "scanSuspiciousTitle": "Possible injection patterns found — review before confirming:",
+    "scanMaliciousTitle": "Blocked: this looks like a prompt-injection attempt and cannot be imported.",
+    "scanDegraded": "Deep scan unavailable — pattern-only result."
   },
   "create": {
     "title": "Create skill",
