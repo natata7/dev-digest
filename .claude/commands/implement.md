@@ -12,7 +12,7 @@ Out of scope by decision: writing the spec (`specreator`), planning (`implementa
 From `$ARGUMENTS` take: the **plan file** (`*-plan-*.md`; if only a spec path/folder is given, look for the plan in the same folder), the **spec** (AC-N source), **extra requirements** (free text), **designs** (Figma URLs, image paths).
 No plan found → stop and tell the user to run `implementation-planner` first (and save its output to `<spec folder>/NN-plan-<feature>.md`). Don't invent a plan.
 
-Read the plan and the spec once. Extract: steps with dependencies, AC-N per step, files owned per step, skills per step, the INSIGHTS digest, verify scope. If steps lack file ownership, derive it from the plan text; if two parallel steps would touch the same file, serialize them.
+Read the plan and the spec once. **Plan gate:** if the plan header has no `Approved: YYYY-MM-DD` line, stop and ask the user (AskUserQuestion) to review the plan and confirm; on yes, write that line into the plan header and continue. Never run an unreviewed plan. Extract: steps with dependencies, AC-N per step, files owned per step, skills per step, the INSIGHTS digest, verify scope. If steps lack file ownership, derive it from the plan text; if two parallel steps would touch the same file, serialize them.
 
 Before launching anything, list every edit the plan makes to a vendored/do-not-touch file (e.g. `client/src/vendor/ui/nav.ts`) and ask the user once whether to proceed; record the answer in the implementer prompt.
 
@@ -41,7 +41,11 @@ Not Verified items that are code gaps → one fix round via `implementer`, then 
 ### 3b. UI gate (only when designs were supplied)
 Either compare the real screens with the mockups (start the stack with `./scripts/dev.sh`, drive it with the Playwright MCP tools, screenshot each mockup's screen) or say explicitly in the final message that the UI was **not visually verified**. Never report a UI feature as done on typecheck/lint/tests alone.
 
-## 4. Wrap up
+## 4. Spec drift check
+
+Collect everything that makes the spec stale: implementer deviations, contract changes in `server/src/vendor/shared` (DTO/field/endpoint differs from the spec), requirements the user added via extra requirements, `Not Verified` items caused by a spec/code mismatch. For each, list `AC-N → what changed → proposed spec edit`. Do NOT edit the spec and do NOT launch `specreator`; put the list in the final message under "Spec needs update" so the user (or `specreator` in edit mode) updates it. No drift → say "spec in sync".
+
+## 5. Wrap up
 
 - If the run produced a non-obvious lesson, append one entry to the touched module's `INSIGHTS.md` per `.claude/skills/engineering-insights/SKILL.md` (once, here — implementers don't).
-- Final message (short): steps done, files changed (count + packages), review findings fixed / left, verifier verdict with the Not Verified list, validation file path, and the manual items for the user (e.g. browser check). Don't commit.
+- Final message (short): steps done, files changed (count + packages), review findings fixed / left, verifier verdict with the Not Verified list, spec drift list (or "spec in sync"), validation file path, and the manual items for the user (e.g. browser check). Don't commit.

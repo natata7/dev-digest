@@ -79,7 +79,7 @@ Each AC has an ID (`AC-1`…), one behavior, and is testable. Replace vague word
 
 - Every AC is in EARS, has an ID, one behavior, and is testable (no "fast", "properly", "large" without a number/condition).
 - Every goal has ≥1 AC; every AC traces to a goal/story; every edge case maps to an AC or an open question; every design element is covered or listed as a gap.
-- No implementation details leaked in (file names, class design, step plans); contracts only where behavior depends on them.
+- No implementation details leaked in (file names, class design, step plans); contracts only where behavior depends on them. No "Technical Considerations"/"Repository Standards" sections listing files, layers or hooks — that is the plan's job; if a spec reads like a second plan, cut it.
 - Non-goals stated; scope fits one feature; modules-touched list matches the chosen folder (one → `docs/specs/`, several → `specs/`).
 - NFRs included only if relevant, each measurable; untrusted-text handling stated where applicable.
 - Every unresolved item is a `[NEEDS CLARIFICATION]` or question; nothing guessed silently; no UX proposal slipped into ACs.
