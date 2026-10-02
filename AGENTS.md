@@ -1,6 +1,6 @@
 # DevDigest — monorepo map
 
-Local-first AI pull-request review. Four standalone packages (no workspace — each
+Local-first AI pull-request review. Five standalone packages (no workspace — each
 has its own `package.json`/lockfile; cross-package code is shared through
 tsconfig path aliases, not published modules). This file is the entry point;
 each package has its own deeper `AGENTS.md` for internal structure/gotchas.
@@ -13,6 +13,7 @@ each package has its own deeper `AGENTS.md` for internal structure/gotchas.
 | `client/` | `@devdigest/web` | Next.js 15 studio UI — import repos, browse PRs, run/read AI reviews, author agents | [client/AGENTS.md](client/AGENTS.md) |
 | `reviewer-core/` | `@devdigest/reviewer-core` | Pure review engine: diff → prompt → LLM → grounded findings. No DB/GitHub/filesystem access | [reviewer-core/AGENTS.md](reviewer-core/AGENTS.md) |
 | `e2e/` | `@devdigest/e2e` | Deterministic browser e2e flows (Vercel `agent-browser`, no LLM) | [e2e/AGENTS.md](e2e/AGENTS.md) |
+| `mcp/` | `@devdigest/mcp` | Local stdio MCP server — exposes agents / reviews / conventions to Claude Code over the HTTP API (opt-in: `claude mcp add`, not started by `dev.sh`) | [mcp/AGENTS.md](mcp/AGENTS.md) |
 | `server/src/vendor/shared` | `@devdigest/shared` | Zod contracts shared across every package (single source of truth; mirrored read-only into `client/src/vendor/shared`) | — |
 
 `repo-intel` (codebase indexer powering the **Indexed** badge) lives inside the
@@ -25,6 +26,7 @@ a separate package.
 - **client** — Next.js 15 (App Router) · React 19 · TanStack Query 5.62 · next-intl 3.26 · mermaid 11.15 · react-markdown 9 · TypeScript 5.7 · Vitest 2.1
 - **reviewer-core** — TypeScript 5.7 · Vitest 2.1 · Zod 3.24 · `openai` SDK 4.77 (talks to any OpenAI-compatible provider, incl. OpenRouter)
 - **e2e** — TypeScript 5.7 · `tsx` 4.19 · `agent-browser` CLI (external binary)
+- **mcp** — TypeScript 5.9 · `@modelcontextprotocol/sdk` 1.x (stdio) · zod 3.25 · `tsx` · Vitest 2.1
 
 ## Commands
 
@@ -45,6 +47,7 @@ Flags for the script: `--no-seed` · `--no-client` · `--db-only` · `--help`.
 | `client` | `pnpm typecheck` | `pnpm test` | `pnpm lint` |
 | `reviewer-core` | `npm run typecheck` | `npm test` | `npm run lint` |
 | `e2e` | `npm run typecheck` | `npm test` (`tsx run.ts`, needs a running stack) | `npm run lint` |
+| `mcp` | `npm run typecheck` | `npm test` (hermetic, API stubbed) | `npm run lint` |
 
 ## Naming conventions
 
@@ -58,7 +61,7 @@ Flags for the script: `--no-seed` · `--no-client` · `--db-only` · `--help`.
 
 - `src/vendor/` (`server`, `client`) — synced/vendored shared code (`@devdigest/shared`, `@devdigest/ui`); local edits get silently overwritten by the next sync. Change the source of truth in `server/src/vendor/shared`, not the copy.
 - `server/src/db/migrations/` — already-applied migration files are immutable history; never hand-edit one. New schema changes go through `pnpm db:generate` (Drizzle Kit), which appends a new migration file.
-- Lock files — `pnpm-lock.yaml` (`server`, `client`), `package-lock.json` (`e2e`), `package-lock.json`/equivalent (`reviewer-core`). Never hand-edit; regenerate via `pnpm install` / `npm install` only. (`e2e` specifically uses **npm**, not pnpm — see [`e2e/AGENTS.md`](e2e/AGENTS.md) gotchas.)
+- Lock files — `pnpm-lock.yaml` (`server`, `client`), `package-lock.json` (`e2e`, `mcp`), `package-lock.json`/equivalent (`reviewer-core`). Never hand-edit; regenerate via `pnpm install` / `npm install` only. (`e2e` and `mcp` use **npm**, not pnpm — see [`e2e/AGENTS.md`](e2e/AGENTS.md) gotchas.)
 
 ## Docs
 

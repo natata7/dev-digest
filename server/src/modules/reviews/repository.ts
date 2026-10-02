@@ -1,6 +1,6 @@
 import type { Db } from '../../db/client.js';
 import * as t from '../../db/schema.js';
-import type { Finding, Intent, PrIntentRecord, RunSummary, RunTrace } from '@devdigest/shared';
+import type { Finding, Intent, PrIntentRecord, RunDetail, RunSummary, RunTrace } from '@devdigest/shared';
 import type { IntentMeta } from './repository/pull.repo.js';
 
 /**
@@ -81,6 +81,11 @@ export class ReviewRepository {
   /** All runs for a PR (any status), newest first — the PR run history. */
   listRunsForPull(workspaceId: string, prId: string): Promise<RunSummary[]> {
     return runRepo.listRunsForPull(this.db, workspaceId, prId);
+  }
+
+  /** One run by id (workspace-scoped), with its PR id; null when not found. */
+  getRun(workspaceId: string, runId: string): Promise<RunDetail | null> {
+    return runRepo.getRun(this.db, workspaceId, runId);
   }
 
   /** Delete one agent run (+ its trace via FK cascade). Workspace-scoped. */

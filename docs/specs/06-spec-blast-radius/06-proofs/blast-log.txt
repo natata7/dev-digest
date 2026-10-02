@@ -1,0 +1,22 @@
+[18:47:09.421] INFO (51135): incoming request
+    reqId: "req-2"
+    req: {
+      "method": "GET",
+      "url": "/pulls/d884d17e-9cbf-4784-ae54-41d7e27bae9b/blast",
+      "host": "localhost:3099",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 50602
+    }
+[18:47:09.558] INFO (51135): blast served from index
+    reqId: "req-2"
+    prId: "d884d17e-9cbf-4784-ae54-41d7e27bae9b"
+    degraded: false
+    symbols: 3
+    callers: 6
+[18:47:09.561] INFO (51135): request completed
+    reqId: "req-2"
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 140.11366605758667
+[18:47:09.598] INFO (51135): SIGTERM received — shutting down

@@ -1,7 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { Db } from '../../../db/client.js';
 import * as t from '../../../db/schema.js';
-import type { RunSummary, RunTrace } from '@devdigest/shared';
+import type { RunDetail, RunSummary, RunTrace } from '@devdigest/shared';
 
 // ---- in-flight / history --------------------------------------------------
 
@@ -36,19 +36,10 @@ export async function activeRunsForPull(
   }));
 }
 
-/** All runs for a PR (any status), newest first — the PR run history. */
-export async function listRunsForPull(
-  db: Db,
-  workspaceId: string,
-  prId: string,
-): Promise<RunSummary[]> {
-  const rows = await db
-    .select({ run: t.agentRuns, agentName: t.agents.name })
-    .from(t.agentRuns)
-    .leftJoin(t.agents, eq(t.agents.id, t.agentRuns.agentId))
-    .where(and(eq(t.agentRuns.workspaceId, workspaceId), eq(t.agentRuns.prId, prId)))
-    .orderBy(desc(t.agentRuns.ranAt));
-  return rows.map(({ run, agentName }) => ({
+type AgentRunRow = typeof t.agentRuns.$inferSelect;
+
+function toRunSummary(run: AgentRunRow, agentName: string | null): RunSummary {
+  return {
     run_id: run.id,
     agent_id: run.agentId,
     agent_name: agentName ?? null,
@@ -66,7 +57,36 @@ export async function listRunsForPull(
     ran_at: run.ranAt ? run.ranAt.toISOString() : null,
     score: run.score,
     blockers: run.blockers,
-  }));
+  };
+}
+
+/** All runs for a PR (any status), newest first — the PR run history. */
+export async function listRunsForPull(
+  db: Db,
+  workspaceId: string,
+  prId: string,
+): Promise<RunSummary[]> {
+  const rows = await db
+    .select({ run: t.agentRuns, agentName: t.agents.name })
+    .from(t.agentRuns)
+    .leftJoin(t.agents, eq(t.agents.id, t.agentRuns.agentId))
+    .where(and(eq(t.agentRuns.workspaceId, workspaceId), eq(t.agentRuns.prId, prId)))
+    .orderBy(desc(t.agentRuns.ranAt));
+  return rows.map(({ run, agentName }) => toRunSummary(run, agentName));
+}
+
+/** One run by id (workspace-scoped), with its PR id; null when not found. */
+export async function getRun(
+  db: Db,
+  workspaceId: string,
+  runId: string,
+): Promise<RunDetail | null> {
+  const [row] = await db
+    .select({ run: t.agentRuns, agentName: t.agents.name })
+    .from(t.agentRuns)
+    .leftJoin(t.agents, eq(t.agents.id, t.agentRuns.agentId))
+    .where(and(eq(t.agentRuns.workspaceId, workspaceId), eq(t.agentRuns.id, runId)));
+  return row ? { ...toRunSummary(row.run, row.agentName), pr_id: row.run.prId } : null;
 }
 
 /**

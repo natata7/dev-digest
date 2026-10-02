@@ -1,0 +1,82 @@
+{
+    "changed_symbols": [
+        {
+            "name": "webhookHandler",
+            "file": "src/api/public/webhooks.ts",
+            "kind": "function"
+        },
+        {
+            "name": "rateLimit",
+            "file": "src/middleware/ratelimit.ts",
+            "kind": "function"
+        },
+        {
+            "name": "bucketKey",
+            "file": "src/middleware/ratelimit.ts",
+            "kind": "function"
+        }
+    ],
+    "downstream": [
+        {
+            "symbol": "rateLimit",
+            "callers": [
+                {
+                    "name": "app",
+                    "file": "src/server.ts",
+                    "line": 88
+                },
+                {
+                    "name": "publicRouter",
+                    "file": "src/api/public/index.ts",
+                    "line": 23
+                },
+                {
+                    "name": "webhookHandler",
+                    "file": "src/api/public/webhooks.ts",
+                    "line": 45
+                },
+                {
+                    "name": "healthCheck",
+                    "file": "src/api/public/health.ts",
+                    "line": 11
+                }
+            ],
+            "endpoints_affected": [
+                "GET /api/public/health",
+                "GET /api/public/items",
+                "POST /api/public/webhooks"
+            ],
+            "crons_affected": []
+        },
+        {
+            "symbol": "bucketKey",
+            "callers": [
+                {
+                    "name": "publicRouter",
+                    "file": "src/api/public/index.ts",
+                    "line": 31
+                },
+                {
+                    "name": "resetBuckets",
+                    "file": "src/jobs/reset-buckets.ts",
+                    "line": 8
+                }
+            ],
+            "endpoints_affected": [
+                "GET /api/public/items"
+            ],
+            "crons_affected": [
+                "reset-rate-buckets (hourly)"
+            ]
+        },
+        {
+            "symbol": "webhookHandler",
+            "callers": [],
+            "endpoints_affected": [],
+            "crons_affected": []
+        }
+    ],
+    "summary": "3 symbols \u00b7 6 callers \u00b7 3 endpoints \u00b7 1 cron",
+    "degraded": false,
+    "indexed_sha": "a1b2c3d4e5f6"
+}

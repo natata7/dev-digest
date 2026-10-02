@@ -64,4 +64,24 @@ describe('routes (no DB)', () => {
     expect(res.json().error.code).toBe('validation_error');
     await app.close();
   });
+
+  // Params validation rejects before the handler, so this stays DB-free (404 for an
+  // unknown PR is covered hermetically in modules/blast/service.test.ts).
+  it('GET /pulls/:id/blast (non-uuid id) → 422 validation_error', async () => {
+    const app = await buildApp({ config });
+    const res = await app.inject({ method: 'GET', url: '/pulls/not-a-uuid/blast' });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error.code).toBe('validation_error');
+    await app.close();
+  });
+
+  // Same DB-free shape as the /blast route above (404 for an unknown PR is
+  // covered hermetically in modules/blast/service.test.ts).
+  it('GET /pulls/:id/history (non-uuid id) → 422 validation_error', async () => {
+    const app = await buildApp({ config });
+    const res = await app.inject({ method: 'GET', url: '/pulls/not-a-uuid/history' });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error.code).toBe('validation_error');
+    await app.close();
+  });
 });

@@ -209,6 +209,10 @@ d('A2 reviews + agents (Testcontainers pg)', () => {
     expect(run!.findingsCount).toBe(1);
     expect(run!.grounding).toBe('1/2 passed');
 
+    // GET /runs/:id — status + the PR it belongs to (lookup by run_id alone)
+    const detail = (await app.inject({ method: 'GET', url: `/runs/${runId}` })).json();
+    expect(detail).toMatchObject({ run_id: runId, pr_id: pr.id, status: 'done', agent_name: 'Sec' });
+
     await app.close();
   });
 
@@ -313,7 +317,7 @@ d('A2 reviews + agents (Testcontainers pg)', () => {
     await app.close();
   });
 
-  it('/runs/:id/cancel and /runs/:id/trace are workspace-scoped', async () => {
+  it('/runs/:id, /runs/:id/cancel and /runs/:id/trace are workspace-scoped', async () => {
     const app = await appWith(REVIEW_FIXTURE);
     const { db } = pg.handle;
 
@@ -339,6 +343,15 @@ d('A2 reviews + agents (Testcontainers pg)', () => {
     // Reading the trace across tenants must 404, not leak the foreign trace.
     const traceRes = await app.inject({ method: 'GET', url: `/runs/${foreignRun!.id}/trace` });
     expect(traceRes.statusCode).toBe(404);
+
+    // Reading the run itself across tenants must 404 too; so must an unknown id.
+    const runRes = await app.inject({ method: 'GET', url: `/runs/${foreignRun!.id}` });
+    expect(runRes.statusCode).toBe(404);
+    const missing = await app.inject({
+      method: 'GET',
+      url: '/runs/00000000-0000-4000-8000-000000000000',
+    });
+    expect(missing.statusCode).toBe(404);
 
     await app.close();
   });

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { RunRequest, ReviewDto, PrIntentRecord, SmartDiffResponse } from '@devdigest/shared';
+import { RunRequest, ReviewDto, PrIntentRecord, RunDetail, SmartDiffResponse } from '@devdigest/shared';
 import type { RunEvent } from '@devdigest/shared';
 import { getContext } from '../_shared/context.js';
 import { IdParams } from '../_shared/schemas.js';
@@ -11,6 +11,7 @@ import { ReviewService } from './service.js';
 /**
  * reviews module.
  *   POST   /pulls/:id/review  {agentId} | {all:true}  → run review(s); returns runs
+ *   GET    /runs/:id                                   → one run (status + pr_id), or 404
  *   GET    /runs/:id/events                            → SSE stream of RunEvent (replay-first)
  *   GET    /runs/:id/trace                             → the single-document RunTrace
  *   GET    /pulls/:id/reviews                          → persisted reviews + findings for a PR
@@ -113,6 +114,17 @@ export default async function reviewsRoutes(appBase: FastifyInstance) {
     const { workspaceId } = await getContext(container, req);
     return service.listRuns(workspaceId, req.params.id);
   });
+
+  // ---- One run by id (status + pr_id) — lets callers holding only a run_id
+  // (e.g. the MCP server) poll status and find the PR --------------------------
+  app.get(
+    '/runs/:id',
+    { schema: { params: IdParams, response: { 200: RunDetail } } },
+    async (req) => {
+      const { workspaceId } = await getContext(container, req);
+      return service.getRun(workspaceId, req.params.id);
+    },
+  );
 
   // ---- Delete one run from the history (+ its trace) ----------------------
   app.delete('/runs/:id', { schema: { params: IdParams } }, async (req) => {

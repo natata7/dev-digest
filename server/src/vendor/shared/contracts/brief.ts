@@ -63,10 +63,28 @@ export const DownstreamImpact = z.object({
 });
 export type DownstreamImpact = z.infer<typeof DownstreamImpact>;
 
+/** Why the index behind a Blast radius read is incomplete/absent. Mirrors
+ *  repo-intel's `DegradedReason` (server/src/modules/repo-intel/types.ts). */
+export const BlastDegradedReason = z.enum([
+  'flag_off',
+  'index_failed',
+  'index_partial',
+  'repo_too_large',
+  'no_data',
+]);
+export type BlastDegradedReason = z.infer<typeof BlastDegradedReason>;
+
 export const BlastRadius = z.object({
   changed_symbols: z.array(ChangedSymbol),
   downstream: z.array(DownstreamImpact),
   summary: z.string(),
+  /** True when the index behind this read is incomplete/absent — missing
+   *  callers ≠ no impact. */
+  degraded: z.boolean().optional(),
+  reason: BlastDegradedReason.optional(),
+  /** Commit the index was built on; caller `file:line` links resolve against
+   *  this sha (not necessarily the PR head). */
+  indexed_sha: z.string().optional(),
 });
 export type BlastRadius = z.infer<typeof BlastRadius>;
 

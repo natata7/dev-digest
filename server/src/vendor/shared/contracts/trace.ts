@@ -119,3 +119,8 @@ export const RunSummary = z.object({
   blockers: z.number().int().nullable(),
 });
 export type RunSummary = z.infer<typeof RunSummary>;
+
+/** One run looked up by id (`GET /runs/:id`) — a RunSummary plus the PR it
+ *  belongs to (null once the PR row is deleted: FK is ON DELETE SET NULL). */
+export const RunDetail = RunSummary.extend({ pr_id: z.string().nullable() });
+export type RunDetail = z.infer<typeof RunDetail>;
