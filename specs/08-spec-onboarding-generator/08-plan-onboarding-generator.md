@@ -235,7 +235,7 @@ S5 + S8 ─> S9 (docs, INSIGHTS, full verify)
     - Register `onboarding` in `modules/index.ts`.
   - Skills: `onion-architecture`, `fastify-best-practices`, `drizzle-orm-patterns`, `zod`, `security`
 
-- [ ] **S5 — Server tests** · `server` · executor `test-writer` · deps: S4
+- [x] **S5 — Server tests** · `server` · executor `test-writer` · deps: S4
   - AC: see traceability table (server rows)
   - Files owned: `server/test/repo-intel-onboarding-reads.test.ts`, `server/test/onboarding-facts.test.ts`, `server/test/onboarding-helpers.test.ts`, `server/test/onboarding-service.test.ts`, `server/test/onboarding.it.test.ts`
   - Skills: `onion-architecture` (rules/testing-strategy.md), `security`
@@ -254,7 +254,7 @@ S5 + S8 ─> S9 (docs, INSIGHTS, full verify)
     - Page states: loading; not cloned (`Repo.clone_path === null` from `useRepos`) → "Repository is not cloned yet", Generate disabled (AC-4); empty state naming the 5 sections + "Generate onboarding tour" (AC-3); generating (button disabled + `role="status"` text, AC-32; D13 for 409); tour: header with Regenerate + "Outdated" badge when `outdated` (AC-7); status banner `role="status"` for `skeleton`/`partial` with plain-words reason + Resync (D11) via `useResyncRepoIntel` (AC-29); partial note "Based on N indexed files (M skipped) — index is partial" (AC-30); regeneration banner "Regeneration failed (<reason>) — showing the tour from <generated_at>" (AC-28); 5 sections in fixed order as `<h2>` headings (NFR-6) with `Markdown` body (no raw HTML, AC-36), `MermaidDiagram` when `diagram` (AC-31), links as repo-relative path text; reading order list with score + `why`; ranking note when `ranking_basis === 'pagerank'` and reading path non-empty (AC-14); "showing X of Y" per truncated coverage category (AC-16); scripts/commands rendered as `<code>` text only, no run buttons (AC-36); footer: model · tokens in/out (`formatTokens`) · cost (`formatRunCost`) or "cost unknown"; skeleton → "Generated without LLM" (AC-37); GET/POST network/5xx → "Couldn't load the onboarding tour" + Retry, keeping any tour already shown (AC-33). All copy in `onboarding.json` (English, AC-38).
   - Skills: `ui-architecture`, `react-best-practices`, `next-best-practices`, `frontend-architecture`
 
-- [ ] **S8 — Client tests** · `client` · executor `test-writer` · deps: S6, S7
+- [x] **S8 — Client tests** · `client` · executor `test-writer` · deps: S6, S7
   - AC: see traceability table (client rows)
   - Files owned: `client/src/components/app-shell/helpers.test.ts`, `client/src/app/repos/[repoId]/onboarding/_components/OnboardingTourView/OnboardingTourView.test.tsx`, `client/src/app/repos/[repoId]/onboarding/_components/OnboardingTourView/helpers.test.ts`
   - Skills: `react-testing-library`, `ui-architecture`
