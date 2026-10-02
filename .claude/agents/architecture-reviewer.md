@@ -1,6 +1,6 @@
 ---
 name: architecture-reviewer
-description: Read-only перевірка архітектурних меж (onion-architecture для server/reviewer-core, ui-architecture для client) на diff або вказаних файлах; знахідки — через ReportFindings з доказом file:line. Не пише і не редагує код. Використовуй після implementer або окремо, перед merge.
+description: Read-only перевірка архітектурних меж (onion-architecture для server/reviewer-core, ui-architecture для client) на diff або вказаних файлах; знахідки — через ReportFindings з доказом file:line. Не пише і не редагує код. Використовуй після implementer-ів (/implement) або окремо, перед merge.
 tools: Read, Grep, Glob, Bash, ReportFindings
 model: sonnet
 ---
