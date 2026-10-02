@@ -1,24 +1,51 @@
 {
   "title": "Project Context",
-  "chunks": "{count} chunks",
-  "reindex": "Re-index",
-  "indexing": "Indexing…",
-  "resync": "Resync",
-  "resyncing": "Resyncing…",
-  "indexStatus": "Index status: {status}",
-  "loadError": "Couldn’t load specs",
-  "kb": "{kb}kb",
-  "empty": {
-    "title": "No spec files yet",
-    "body": "Drop your PRDs, tech specs, and acceptance criteria under .devdigest/specs/. Every agent and the PR brief read them as grounding context."
+  "docList": {
+    "filterPlaceholder": "Filter documents…",
+    "empty": "No matching files",
+    "reorder": "Reorder",
+    "missing": "missing",
+    "preview": "Preview",
+    "previewError": "Couldn’t load file",
+    "tokens": "{count} tok",
+    "tokensFull": "{count} tokens",
+    "attached": "Attached",
+    "attach": "Attach"
   },
-  "mode": {
-    "preview": "preview",
-    "edit": "edit"
+  "tab": {
+    "noRepo": "Select a repository to attach project context."
   },
-  "editor": {
-    "loadError": "Couldn’t load spec",
-    "save": "Save",
-    "saving": "Saving…"
+  "agentTab": {
+    "title": "Project context",
+    "attachedCount": "{k} of {n} attached",
+    "footer": "Injected as an untrusted block (<code>## Project context</code>) into every run.",
+    "hint": "Order matters — earlier docs appear earlier in the assembled <code>## Project context</code> block. Toggle to attach.",
+    "tokens": "≈ {tokens} tokens"
+  },
+  "skillTab": {
+    "title": "Project context to use",
+    "attachedCount": "{k} attached",
+    "serializesAs": "Serializes as",
+    "none": "(nothing attached)",
+    "hint": "Any agent using this skill inherits these documents."
+  },
+  "page": {
+    "crumbLab": "Workspace",
+    "crumbContext": "Project Context",
+    "heading": "Project Context",
+    "subtitle": "Spec, doc and insight files that agents can read as grounding context. View only.",
+    "filterPlaceholder": "Filter by path…",
+    "loadError": "Couldn’t load project context",
+    "selectFile": "Select a file to preview",
+    "usedBy": "Used by {count, plural, one {# agent} other {# agents}}",
+    "footer": "Indexed: {files} files · {tokens} tokens total",
+    "empty": {
+      "title": "No context files found",
+      "body": "Add Markdown files under specs/, docs/ or insights/ in the repository."
+    },
+    "label": "Project context",
+    "refresh": "Refresh",
+    "preview": "Preview",
+    "footerTime": "last {time}"
   }
 }

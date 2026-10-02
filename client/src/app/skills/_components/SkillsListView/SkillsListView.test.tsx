@@ -14,6 +14,7 @@ const SKILL_A: Skill = {
   body: "# Uncovered branches",
   enabled: true,
   version: 1,
+  context_paths: [],
 };
 
 const SKILL_B: Skill = {
@@ -25,6 +26,7 @@ const SKILL_B: Skill = {
   body: "# Flaky tests",
   enabled: true,
   version: 1,
+  context_paths: [],
 };
 
 const nav = vi.hoisted(() => ({ push: vi.fn() }));

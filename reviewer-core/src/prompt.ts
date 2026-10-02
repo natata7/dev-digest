@@ -63,7 +63,7 @@ export interface PromptParts {
   /** Relevant memory items (trusted, curated). */
   memory?: string[];
   /** Project-context spec chunks (untrusted content). */
-  specs?: string[];
+  specs?: Array<string | { path: string; text: string }>;
   /**
    * Repo skeleton / map (T3): top-ranked symbols by signature, token-budgeted.
    * Untrusted (derived from repo code) — delimiter-wrapped. Rendered before
@@ -122,7 +122,14 @@ export function assemblePrompt(parts: PromptParts): AssembledPrompt {
       : undefined;
   const specsBlock =
     parts.specs && parts.specs.length > 0
-      ? parts.specs.map((s, i) => wrapUntrusted(`spec-${i}`, s)).join('\n\n')
+      ? parts.specs
+          .map((s, i) =>
+            typeof s === 'string'
+              ? wrapUntrusted(`spec-${i}`, s)
+              : // path comes from the filesystem: no quotes/newlines in the attribute
+                wrapUntrusted(s.path.replace(/"/g, "'").replace(/[\r\n]+/g, ' '), s.text),
+          )
+          .join('\n\n')
       : undefined;
 
   const prDescription =

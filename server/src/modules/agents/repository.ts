@@ -67,6 +67,39 @@ export class AgentsRepository {
     return new Map(rows.map((r) => [r.agentId, Number(r.n)]));
   }
 
+  async setContextPaths(workspaceId: string, id: string, paths: string[]): Promise<AgentRow | undefined> {
+    const [row] = await this.db
+      .update(t.agents)
+      .set({ contextPaths: paths })
+      .where(and(eq(t.agents.workspaceId, workspaceId), eq(t.agents.id, id)))
+      .returning();
+    return row;
+  }
+
+  /** path -> number of distinct agents using it directly or via an enabled linked (enabled) skill. */
+  async contextUsage(workspaceId: string): Promise<Map<string, number>> {
+    const agents = await this.db
+      .select({ id: t.agents.id, paths: t.agents.contextPaths })
+      .from(t.agents)
+      .where(eq(t.agents.workspaceId, workspaceId));
+    const links = await this.db
+      .select({ agentId: t.agentSkills.agentId, paths: t.skills.contextPaths })
+      .from(t.agentSkills)
+      .innerJoin(t.skills, eq(t.agentSkills.skillId, t.skills.id))
+      .where(
+        and(
+          eq(t.skills.workspaceId, workspaceId),
+          eq(t.skills.enabled, true),
+          eq(t.agentSkills.enabled, true),
+        ),
+      );
+    const byAgent = new Map<string, Set<string>>(agents.map((a) => [a.id, new Set(a.paths)]));
+    for (const l of links) for (const p of l.paths) byAgent.get(l.agentId)?.add(p);
+    const usage = new Map<string, number>();
+    for (const set of byAgent.values()) for (const p of set) usage.set(p, (usage.get(p) ?? 0) + 1);
+    return usage;
+  }
+
   async listEnabled(workspaceId: string): Promise<AgentRow[]> {
     return this.db
       .select()

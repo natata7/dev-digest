@@ -18,6 +18,7 @@ const SKILL: Skill = {
   body: "# Uncovered branches\nRequire an assertion per new branch.",
   enabled: true,
   version: 1,
+  context_paths: [],
 };
 
 describe("PreviewTab", () => {

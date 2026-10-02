@@ -110,3 +110,16 @@ export function useSetAgentSkills(agentId: string) {
     },
   });
 }
+
+/** Replace the agent's attached project-context paths (PUT body {paths}). */
+export function useSetAgentContext(agentId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (paths: string[]) => api.put<Agent>(`/agents/${agentId}/context`, { paths }),
+    onSuccess: (agent) => {
+      qc.setQueryData(["agent", agentId], agent);
+      qc.invalidateQueries({ queryKey: ["agents"] });
+      qc.invalidateQueries({ queryKey: ["context"] });
+    },
+  });
+}

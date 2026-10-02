@@ -19,6 +19,7 @@ function skill(id: string, name: string, enabled = true): Skill {
     body: `# ${name}`,
     enabled,
     version: 1,
+    context_paths: [],
   };
 }
 

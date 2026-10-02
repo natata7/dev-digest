@@ -45,6 +45,7 @@ const SKILL: Skill = {
   body: "# Catch blocks too\nAlso flag uncovered catch paths.",
   enabled: true,
   version: 2,
+  context_paths: [],
 };
 
 function renderTab() {

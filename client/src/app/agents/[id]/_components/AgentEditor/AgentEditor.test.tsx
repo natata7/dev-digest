@@ -34,6 +34,7 @@ const AGENT: Agent = {
   repo_intel: true,
   enabled: true,
   version: 1,
+  context_paths: [],
 };
 
 function renderWithIntl(ui: React.ReactElement) {
@@ -49,7 +50,7 @@ describe("A2 Agent Editor (smoke)", () => {
     renderWithIntl(<AgentEditor agent={AGENT} tab="config" onTab={() => {}} />);
     expect(screen.getByText("Config")).toBeInTheDocument();
     expect(screen.getByText("Skills")).toBeInTheDocument();
-    expect(screen.queryByText("Context")).not.toBeInTheDocument();
+    expect(screen.getByText("Context")).toBeInTheDocument();
     expect(screen.queryByText("Evals")).not.toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
     expect(screen.queryByText("CI")).not.toBeInTheDocument();
@@ -57,12 +58,12 @@ describe("A2 Agent Editor (smoke)", () => {
     expect(screen.getByText("Save agent")).toBeInTheDocument();
   });
 
-  it("renders the Skills tab and no Context/Evals/Stats/CI", () => {
+  it("renders the Skills tab and no Evals/Stats/CI", () => {
     renderWithIntl(<AgentEditor agent={AGENT} tab="skills" onTab={() => {}} />);
     expect(screen.getByText("Config")).toBeInTheDocument();
     expect(screen.getAllByText("Skills").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByPlaceholderText("Filter skills…")).toBeInTheDocument();
-    expect(screen.queryByText("Context")).not.toBeInTheDocument();
+    expect(screen.getByText("Context")).toBeInTheDocument();
     expect(screen.queryByText("Evals")).not.toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
     expect(screen.queryByText("CI")).not.toBeInTheDocument();

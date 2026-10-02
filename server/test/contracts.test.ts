@@ -199,6 +199,7 @@ describe('SkillSource', () => {
         body: '# Flaky tests',
         enabled: false,
         version: 1,
+        context_paths: [],
       }).source,
     ).toBe('imported');
   });

@@ -46,6 +46,9 @@ const EnvSchema = z.object({
   // use; this only adds volume, never new sensitive content. Meant to be flipped
   // on in a local .env for prompt-size debugging, not in a shared/deployed one.
   PROMPT_LOG_VERBOSE: z.string().optional(),
+  // Project Context discovery: which clone files are listed/readable. Supports
+  // `**`, `*` and `{a,b}` only (see modules/context/helpers.ts globToRegExp).
+  CONTEXT_DOCS_GLOB: z.string().default('**/{specs,docs,insights}/**/*.md'),
 });
 
 export type AppConfig = {
@@ -75,6 +78,8 @@ export type AppConfig = {
   repoIntelEnabled: boolean;
   /** Extra per-chunk detail on prompt-composition logs. Default false — local-dev-only knob. */
   promptLogVerbose: boolean;
+  /** Glob (clone-relative) of Project Context files. Env: CONTEXT_DOCS_GLOB. */
+  contextGlob: string;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -95,5 +100,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     embeddingsEnabled: parsed.EMBEDDINGS_ENABLED === 'true',
     repoIntelEnabled: parsed.REPO_INTEL_ENABLED !== 'false',
     promptLogVerbose: parsed.PROMPT_LOG_VERBOSE === 'true',
+    contextGlob: parsed.CONTEXT_DOCS_GLOB,
   };
 }

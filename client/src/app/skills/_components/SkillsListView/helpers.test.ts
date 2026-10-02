@@ -12,6 +12,7 @@ const SKILLS: Skill[] = [
     body: "# A",
     enabled: true,
     version: 1,
+    context_paths: [],
   },
   {
     id: "2",
@@ -22,6 +23,7 @@ const SKILLS: Skill[] = [
     body: "# B",
     enabled: true,
     version: 1,
+    context_paths: [],
   },
 ];
 

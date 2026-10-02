@@ -158,6 +158,7 @@ export const Skill = z.object({
   version: z.number().int(),
   agent_count: z.number().int().nonnegative().optional(),
   evidence_files: z.array(z.string()).nullish(),
+  context_paths: z.array(z.string()),
 });
 export type Skill = z.infer<typeof Skill>;
 
@@ -271,6 +272,7 @@ export const Agent = z.object({
   // Inject repo-intel context (repo skeleton + callers + rank note) into this
   // agent's review prompt. Default on; gated again by the global flag.
   repo_intel: z.boolean().default(true),
+  context_paths: z.array(z.string()),
 });
 export type Agent = z.infer<typeof Agent>;
 

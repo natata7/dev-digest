@@ -19,6 +19,7 @@ export function toSkillDto(row: SkillRow, agentCount = 0): Skill {
     version: row.version,
     agent_count: agentCount,
     evidence_files: row.evidenceFiles ?? null,
+    context_paths: row.contextPaths,
   };
 }
 

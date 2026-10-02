@@ -7,6 +7,7 @@ import type { ReviewRepository, FindingRow, PullRow, ReviewRow, RepoRow } from '
 import { REVIEW_STRATEGY } from './constants.js';
 import { enabledSkillBodies } from '../agents/helpers.js';
 import { describePromptSections, skillsPromptArg, taskLine } from './helpers.js';
+import { effectiveContextPaths } from '../context/effective.js';
 import { loadDiff } from './diff-loader.js';
 import { deriveIntentBlock } from './intent-loader.js';
 
@@ -190,10 +191,22 @@ export class ReviewRunExecutor {
 
       const task = taskLine(pull) + rankNote;
 
-      const skillBodies = enabledSkillBodies(await this.agents.linkedSkills(agent.id));
+      const linked = await this.agents.linkedSkills(agent.id);
+      const skillBodies = enabledSkillBodies(linked);
       if (skillBodies.length > 0) {
         runLog.info(`Injecting ${skillBodies.length} skill(s)`);
       }
+
+      // Project Context: attached docs (agent first, then enabled skills in order).
+      const ctxPaths = effectiveContextPaths(
+        agent.contextPaths,
+        linked.filter((l) => l.enabled).map((l) => l.skill.contextPaths),
+      );
+      const { docs: ctxDocs, skipped: ctxSkipped } =
+        ctxPaths.length > 0
+          ? await this.container.contextService.readDocs(workspaceId, pull.repoId, ctxPaths)
+          : { docs: [], skipped: [] };
+      for (const sk of ctxSkipped) runLog.info(`context doc skipped (${sk.reason}): ${sk.path}`);
 
       // ---- Engine: assemble → single-pass → grounding -----------------------
       // The pure review pipeline lives in @devdigest/reviewer-core (shared with
@@ -214,6 +227,7 @@ export class ReviewRunExecutor {
         ...(repoMap ? { repoMap } : {}),
         // Dual-gated skill bodies (omit the key when none survive both gates).
         ...skillsPromptArg(skillBodies),
+        ...(ctxDocs.length > 0 ? { specs: ctxDocs.map((d) => ({ path: d.path, text: d.text })) } : {}),
         // PR author's description/body — untrusted; assemblePrompt wraps +
         // truncates it. Omitted when the PR has no body.
         ...(pull.body ? { prDescription: pull.body } : {}),
@@ -321,7 +335,9 @@ export class ReviewRunExecutor {
         })),
         raw_output: outcome.raw,
         memory_pulled: [],
-        specs_read: [],
+        specs_read: ctxDocs.map((d) => d.path),
+        specs_read_detail: ctxDocs.map((d) => ({ path: d.path, tokens: d.tokens })),
+        specs_skipped: ctxSkipped,
         // Persisted log = the run's FULL event buffer (incl. shared pre-work:
         // diff load + intent), not just events recorded inside this method.
         log: runLog.logFor(runId),
