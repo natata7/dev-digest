@@ -454,8 +454,33 @@ export class RepoIntelRepository {
       .select({ path: t.fileRank.filePath, rank: t.fileRank.rank })
       .from(t.fileRank)
       .where(eq(t.fileRank.repoId, repoId))
-      .orderBy(desc(t.fileRank.rank))
+      .orderBy(desc(t.fileRank.rank), asc(t.fileRank.filePath))
       .limit(limit);
+  }
+
+  /** Every `file_rank` row with pagerank/hotness; rank DESC then path ASC. */
+  async getAllRanked(
+    repoId: string,
+  ): Promise<Array<{ path: string; pagerank: number; hotness: number }>> {
+    return this.db
+      .select({
+        path: t.fileRank.filePath,
+        pagerank: t.fileRank.pagerank,
+        hotness: t.fileRank.hotness,
+      })
+      .from(t.fileRank)
+      .where(eq(t.fileRank.repoId, repoId))
+      .orderBy(desc(t.fileRank.rank), asc(t.fileRank.filePath));
+  }
+
+  /** All `file_facts` rows that declare endpoints, file ASC. */
+  async getAllEndpointFacts(repoId: string): Promise<Array<{ file: string; endpoints: string[] }>> {
+    const rows = await this.db
+      .select({ file: t.fileFacts.filePath, endpoints: t.fileFacts.endpoints })
+      .from(t.fileFacts)
+      .where(eq(t.fileFacts.repoId, repoId))
+      .orderBy(asc(t.fileFacts.filePath));
+    return rows.map((r) => ({ file: r.file, endpoints: (r.endpoints as string[]) ?? [] }));
   }
 
   /** Repo-map candidates: symbols with a signature, joined to rank, ordered. */

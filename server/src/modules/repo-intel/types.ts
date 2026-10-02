@@ -121,6 +121,19 @@ export interface FileRankRow {
   percentile: number;
 }
 
+/** One `file_rank` row for the onboarding reading path. `junk` = tests/configs/migrations/.d.ts. */
+export interface RankedFileRow {
+  path: string;
+  pagerank: number;
+  hotness: number;
+  junk: boolean;
+}
+
+export interface EndpointFactRow {
+  file: string;
+  endpoint: string;
+}
+
 export interface RepoMapResult {
   text: string;
   tokens: number;
@@ -169,4 +182,8 @@ export interface RepoIntel {
     opts?: { exclude?: string[] },
   ): Promise<string[]>;
   getCriticalPaths(repoId: string): Promise<string[][]>;
+  /** All ranked files, rank DESC then path ASC; `[]` when the flag is off. */
+  getRankedFiles(repoId: string): Promise<RankedFileRow[]>;
+  /** Every file_facts endpoint, file ASC then endpoint ASC; `[]` when the flag is off. */
+  getEndpointFacts(repoId: string): Promise<EndpointFactRow[]>;
 }

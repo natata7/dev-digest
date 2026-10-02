@@ -1,0 +1,42 @@
+import type { CSSProperties } from "react";
+
+export const s = {
+  page: { padding: "24px 32px 44px", maxWidth: 900, margin: "0 auto" } satisfies CSSProperties,
+  header: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+    marginBottom: 18,
+  } satisfies CSSProperties,
+  h1: { fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" } satisfies CSSProperties,
+  subtitle: { fontSize: 14, color: "var(--text-secondary)", marginTop: 4 } satisfies CSSProperties,
+  actions: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 } satisfies CSSProperties,
+  banner: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "10px 14px",
+    marginBottom: 12,
+    borderRadius: 8,
+    fontSize: 13,
+    background: "var(--bg-elevated)",
+    border: "1px solid var(--border)",
+  } satisfies CSSProperties,
+  note: { fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 } satisfies CSSProperties,
+  section: { marginTop: 24 } satisfies CSSProperties,
+  h2: { fontSize: 18, fontWeight: 650, marginBottom: 8 } satisfies CSSProperties,
+  list: { margin: "8px 0 0", paddingLeft: 20, fontSize: 14, lineHeight: 1.6 } satisfies CSSProperties,
+  muted: { color: "var(--text-secondary)", fontSize: 13 } satisfies CSSProperties,
+  links: { display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 } satisfies CSSProperties,
+  footer: {
+    marginTop: 32,
+    paddingTop: 12,
+    borderTop: "1px solid var(--border)",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 12,
+    fontSize: 12,
+    color: "var(--text-secondary)",
+  } satisfies CSSProperties,
+};

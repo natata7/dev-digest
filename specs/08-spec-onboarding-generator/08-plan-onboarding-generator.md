@@ -2,7 +2,7 @@
 
 Implementation Plan for [08-spec-onboarding-generator.md](08-spec-onboarding-generator.md) (round-1 decisions: [08-questions-1](08-questions-1-onboarding-generator.md), adopted by recommendation, pending user veto — not re-litigated here).
 
-Approved: — (pending user review)
+Approved: 2026-10-02
 
 Status: draft, nothing executed. Execution mode: **multi-agent (recommended, pending user confirmation — see «Режим виконання»)**.
 
@@ -199,19 +199,19 @@ S6 (nav + activeKeyFor) — independent, any time
 S5 + S8 ─> S9 (docs, INSIGHTS, full verify)
 ```
 
-- [ ] **S1 — Shared contract `Onboarding` (server source of truth + client hunk)** · package `server` (+ client mirror) · deps: none · runs first, alone
+- [x] **S1 — Shared contract `Onboarding` (server source of truth + client hunk)** · package `server` (+ client mirror) · deps: none · runs first, alone
   - AC: contract basis for AC-2, AC-3/E21, AC-7, AC-14, AC-16, AC-19, AC-22, AC-25, AC-27, AC-28, AC-30, AC-37
   - Files owned: `server/src/vendor/shared/contracts/knowledge.ts`, `client/src/vendor/shared/contracts/knowledge.ts` (same hunk), `server/test/contracts.test.ts`
   - Work: extend schemas exactly per «Міжкрокові зв'язки»; update the old `Onboarding.parse` fixture in `contracts.test.ts` to the new shape and add one assertion that the old shape `{sections:[…]}` fails `safeParse` (E21) and that 4 sections fail. Grep both packages for `Onboarding` fixtures again.
   - Skills: `zod`, `onion-architecture`
 
-- [ ] **S2 — repo-intel facade: ranked files with pagerank/hotness, endpoint facts, deterministic ties** · `server` · deps: S1 (none strictly; can start in parallel with S1 only if file-disjoint — it is) 
+- [x] **S2 — repo-intel facade: ranked files with pagerank/hotness, endpoint facts, deterministic ties** · `server` · deps: S1 (none strictly; can start in parallel with S1 only if file-disjoint — it is) 
   - AC: AC-11, AC-12, AC-13, AC-15, AC-21 (source of "indexed files"), E7
   - Files owned: `server/src/modules/repo-intel/types.ts`, `server/src/modules/repo-intel/service.ts`, `server/src/modules/repo-intel/repository.ts`, `server/src/modules/repo-intel/README.md`, `server/test/conventions.it.test.ts` (add the two methods to `stubIntel` only)
   - Work: `RankedFileRow`/`EndpointFactRow` types + `getRankedFiles`/`getEndpointFacts` on the interface and service (flag off → `[]`); repository `getRankedFileRows(repoId)` (select path, pagerank, hotness; order `rank DESC, file_path ASC`) and `getAllEndpointFacts(repoId)`; `junk` via existing `isJunkPath`; add `asc(file_path)` tie-break to `getRankedPaths`; add `|| a.localeCompare(b)` tie-break in `getCriticalPaths` next-hop sort.
   - Skills: `onion-architecture`, `drizzle-orm-patterns`
 
-- [ ] **S3 — Onboarding facts collection + pure builders (skeleton, budget, merge, links)** · `server` · deps: S1, S2
+- [x] **S3 — Onboarding facts collection + pure builders (skeleton, budget, merge, links)** · `server` · deps: S1, S2
   - AC: AC-8, AC-9, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17, AC-19, AC-20, AC-21, AC-26, AC-35, AC-38 (skeleton copy English), NFR-4; edge E6, E7, E8, E9, E10, E11, E12 (missing section), E18, E20
   - Files owned: `server/src/modules/_shared/clone-fs.ts` (new), `server/src/modules/context/helpers.ts` (replace `isInsideRoot` body with a re-export only), `server/src/modules/onboarding/facts.ts`, `server/src/modules/onboarding/helpers.ts`, `server/src/modules/onboarding/constants.ts`
   - Work:
@@ -223,7 +223,7 @@ S5 + S8 ─> S9 (docs, INSIGHTS, full verify)
     - `reasonForIndex` (D17), `classifyLlmError` (`ConfigError` → `llm_not_configured`; `TimeoutError` or name/message matching timeout → `llm_timeout`; message matching `schema validation` or `ZodError` → `llm_invalid_output`; else `llm_failed`).
   - Skills: `onion-architecture`, `security`, `typescript-expert`
 
-- [ ] **S4 — Onboarding service, repository, routes, prompt** · `server` · deps: S3
+- [x] **S4 — Onboarding service, repository, routes, prompt** · `server` · deps: S3
   - AC: AC-2 (server: GET makes 0 LLM calls), AC-3/E21, AC-5/E1, AC-6/E19, AC-7/E16, AC-18/E3, AC-22, AC-23/E15, AC-25/E2/E4/E5, AC-27/E13, AC-28/E14, AC-34/E17, AC-38, NFR-1, NFR-2, NFR-3, NFR-5
   - Files owned: `server/src/modules/onboarding/service.ts`, `server/src/modules/onboarding/repository.ts`, `server/src/modules/onboarding/routes.ts`, `server/src/modules/index.ts`, `server/src/prompts/onboarding.system.md`
   - Work:
@@ -240,13 +240,13 @@ S5 + S8 ─> S9 (docs, INSIGHTS, full verify)
   - Files owned: `server/test/repo-intel-onboarding-reads.test.ts`, `server/test/onboarding-facts.test.ts`, `server/test/onboarding-helpers.test.ts`, `server/test/onboarding-service.test.ts`, `server/test/onboarding.it.test.ts`
   - Skills: `onion-architecture` (rules/testing-strategy.md), `security`
 
-- [ ] **S6 — Sidebar entry + nav highlight fix** · `client` · deps: none (parallel with anything) · **sanctioned vendored edit (D1)**
+- [x] **S6 — Sidebar entry + nav highlight fix** · `client` · deps: none (parallel with anything) · **sanctioned vendored edit (D1)**
   - AC: AC-1, AC-24
   - Files owned: `client/src/vendor/ui/nav.ts` (one item only), `client/src/components/app-shell/helpers.ts`, `client/src/components/app-shell/helpers.test.ts` (new; may be written here or by S8)
   - Work: add the NAV item (D1). `activeKeyFor`: replace `pathname.includes("/onboarding")` with `/^\/repos\/[^/]+\/onboarding(\/|$)/.test(pathname)`; plain `/onboarding` → `""`.
   - Skills: `ui-architecture`
 
-- [ ] **S7 — Client hooks, copy, tour page** · `client` · deps: S1 (client mirror), API shape from S4 (signature above — can be built in parallel with S2–S4)
+- [x] **S7 — Client hooks, copy, tour page** · `client` · deps: S1 (client mirror), API shape from S4 (signature above — can be built in parallel with S2–S4)
   - AC: AC-2, AC-3, AC-4, AC-7, AC-14, AC-16, AC-28, AC-29, AC-30, AC-31, AC-32, AC-33, AC-36, AC-37, AC-38, NFR-6; edge E1, E12, E14, E15, E16, E21
   - Files owned: `client/src/lib/hooks/onboarding.ts` (new), `client/src/lib/hooks/index.ts` (one export line), `client/messages/en/onboarding.json` (rewrite), `client/src/app/repos/[repoId]/onboarding/page.tsx` (new, thin), `client/src/app/repos/[repoId]/onboarding/_components/OnboardingTourView/**` (new: `OnboardingTourView.tsx`, `styles.ts`, `helpers.ts`, `constants.ts`, `index.ts`, optional sub-`_components/` e.g. `TourSection`, `TourStatusBanner`, `TourFooter`)
   - Work:

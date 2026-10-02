@@ -45,6 +45,10 @@ touch the pipeline internals:
 - `getBlastRadius(repoId, files)` → impacted symbols / callers (used by L04).
 - `getUnresolvedReferences(repoId, …)` → phantom-symbol detection (used by L06).
 - `getConventionSamples(repoId)` → top-ranked files for convention extraction (L02).
+- `getRankedFiles(repoId)` → every `file_rank` row (`pagerank`, `hotness`, `junk`), rank DESC then path ASC (onboarding; `[]` when flag off).
+- `getEndpointFacts(repoId)` → every `file_facts` endpoint, file ASC then endpoint ASC (onboarding; `[]` when flag off).
+
+Rank reads and `getCriticalPaths` tie-break on `path ASC` so equal ranks are deterministic.
 
 In the starter, only `getRepoMap` / `getFileRank` / `getCallerSignatures` are
 wired — into `modules/reviews/run-executor.ts`, which adds the repo map and a

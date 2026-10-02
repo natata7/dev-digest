@@ -81,6 +81,8 @@ function stubIntel(samples: string[]): RepoIntel {
     getConventionSamples: async () => samples,
     getTopFilesByRank: async () => samples,
     getCriticalPaths: async () => [],
+    getRankedFiles: async () => [],
+    getEndpointFacts: async () => [],
   };
 }
 

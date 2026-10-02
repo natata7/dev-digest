@@ -1,4 +1,3 @@
-import { isAbsolute, normalize, relative, resolve, sep } from 'node:path';
 import type { SpecFile } from '@devdigest/shared';
 
 /** ~4 chars per token heuristic. */
@@ -12,13 +11,7 @@ export function kindOf(path: string): SpecFile['kind'] | null {
   return null;
 }
 
-/** True when `rel` (relative, no `..`, not absolute) stays lexically inside `root`. */
-export function isInsideRoot(root: string, rel: string): boolean {
-  if (!rel || rel.includes('\0') || isAbsolute(rel)) return false;
-  const full = resolve(root, normalize(rel));
-  const r = relative(resolve(root), full);
-  return r !== '' && !r.startsWith('..') && !isAbsolute(r) && !r.split(sep).includes('..');
-}
+export { isInsideRoot } from '../_shared/clone-fs.js';
 
 /** Tiny glob → RegExp: supports `**`, `*`, `{a,b}`; everything else literal. */
 export function globToRegExp(glob: string): RegExp {

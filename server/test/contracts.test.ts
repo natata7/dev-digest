@@ -135,11 +135,40 @@ describe('AI contracts parse fixtures', () => {
         completeness_pct: 80,
       }),
     ).not.toThrow();
-    expect(() =>
-      Onboarding.parse({
-        sections: [{ kind: 'architecture', title: 'T', body: 'b', links: [] }],
-      }),
-    ).not.toThrow();
+    const count = { shown: 0, total: 0, truncated: false };
+    const kinds = ['architecture', 'critical_paths', 'local_run', 'reading_order', 'first_tasks'];
+    const sections = kinds.map((kind) => ({ kind, title: 'T', body: 'b', links: [], source: 'facts' }));
+    const tour = {
+      sections,
+      reading_path: [{ path: 'a.ts', score: 0.5, why: null }],
+      status: 'skeleton',
+      reason: 'no_index',
+      regeneration_error: null,
+      ranking_basis: 'pagerank',
+      coverage: {
+        index_status: 'none',
+        files_indexed: 0,
+        files_skipped: 0,
+        routes: count,
+        scripts: count,
+        structure: count,
+        reading_path: count,
+        critical_paths: count,
+      },
+      indexed_sha: null,
+      generated_at: '2026-01-01T00:00:00.000Z',
+      outdated: false,
+      model: null,
+      tokens_in: null,
+      tokens_out: null,
+      cost_usd: null,
+    };
+    expect(() => Onboarding.parse(tour)).not.toThrow();
+    // E21: old shape and wrong section count are rejected
+    expect(
+      Onboarding.safeParse({ sections: [{ kind: 'architecture', title: 'T', body: 'b', links: [] }] }).success,
+    ).toBe(false);
+    expect(Onboarding.safeParse({ ...tour, sections: sections.slice(0, 4) }).success).toBe(false);
     expect(() =>
       EvalRun.parse({
         recall: 0.82,

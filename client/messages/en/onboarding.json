@@ -1,17 +1,59 @@
 {
-  "title": "Onboarding Tour",
-  "sections": "Sections",
-  "sectionCount": "{count} sections",
+  "title": "Onboarding tour",
+  "subtitle": "A guided tour of this repository for new contributors.",
+  "generate": "Generate onboarding tour",
   "regenerate": "Regenerate",
-  "regenerating": "Regenerating…",
-  "unknownError": "Unknown error",
-  "generate": {
-    "title": "Generate onboarding tour",
-    "body": "DevDigest indexes the repo and specs, then writes a 5-section guided tour: overview, architecture, key modules, getting started, and conventions & gotchas.",
-    "cta": "Generate onboarding tour",
-    "generating": "Generating…"
+  "generating": "Generating onboarding tour…",
+  "alreadyGenerating": "A tour is already being generated",
+  "notCloned": "Repository is not cloned yet",
+  "outdated": "Outdated",
+  "resync": "Resync",
+  "retry": "Retry",
+  "loadError": "Couldn’t load the onboarding tour",
+  "generateError": "Couldn’t generate the onboarding tour",
+  "empty": {
+    "title": "No onboarding tour yet",
+    "body": "A tour has 5 sections, in this order:"
   },
-  "loadError": {
-    "title": "Couldn’t load the onboarding tour"
+  "sectionNames": {
+    "architecture": "Architecture",
+    "critical_paths": "Critical paths",
+    "local_run": "Run locally",
+    "reading_order": "Reading order",
+    "first_tasks": "First tasks"
+  },
+  "status": {
+    "skeleton": "This tour was built from repository facts only.",
+    "partial": "This tour is only partly based on the index."
+  },
+  "reasons": {
+    "index_partial": "the index is partial",
+    "no_index": "the repository has not been indexed yet",
+    "index_degraded": "the index is degraded",
+    "index_failed": "indexing failed",
+    "flag_off": "repo-intel is disabled",
+    "llm_failed": "the language model call failed",
+    "llm_timeout": "the language model timed out",
+    "llm_invalid_output": "the language model returned invalid output",
+    "llm_not_configured": "no language model is configured"
+  },
+  "partialNote": "Based on {indexed} indexed files ({skipped} skipped) — index is partial",
+  "regenerationFailed": "Regeneration failed ({reason}) — showing the tour from {when}",
+  "rankingPagerank": "Ranked by import graph only — no git history in the shallow clone",
+  "showing": "{label}: showing {shown} of {total}",
+  "coverage": {
+    "routes": "Routes",
+    "scripts": "Scripts",
+    "structure": "Structure",
+    "reading_path": "Reading path",
+    "critical_paths": "Critical paths"
+  },
+  "readingScore": "score {score}",
+  "footer": {
+    "model": "Model {model}",
+    "tokens": "{tokensIn} in / {tokensOut} out",
+    "costUnknown": "cost unknown",
+    "generatedAt": "Generated {when}",
+    "noLlm": "Generated without LLM"
   }
 }
