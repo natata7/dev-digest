@@ -10,7 +10,6 @@
   "resync": "Resync",
   "retry": "Retry",
   "loadError": "Couldn’t load the onboarding tour",
-  "generateError": "Couldn’t generate the onboarding tour",
   "empty": {
     "title": "No onboarding tour yet",
     "body": "A tour has 5 sections, in this order:"

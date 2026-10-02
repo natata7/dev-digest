@@ -89,7 +89,7 @@ export function OnboardingTourView() {
         )}
         {(isError || postFailed) && (
           <ErrorState
-            title={t(isError ? "loadError" : "generateError")}
+            title={t("loadError")}
             onRetry={() => (isError ? refetch() : run())}
           />
         )}
@@ -107,11 +107,12 @@ export function OnboardingTourView() {
                     <li key={k}>{t(`sectionNames.${k}`)}</li>
                   ))}
                 </ol>
+                {/* vendored EmptyState CTA has no disabled prop (AC-4) */}
+                <Button disabled={disabled} loading={busy} onClick={run}>
+                  {t("generate")}
+                </Button>
               </>
             }
-            cta={t("generate")}
-            ctaLoading={busy}
-            onCta={() => !disabled && run()}
           />
         )}
 
