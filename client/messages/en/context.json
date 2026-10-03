@@ -44,6 +44,7 @@
       "body": "Add Markdown files under specs/, docs/ or insights/ in the repository."
     },
     "label": "Project context",
+    "rootMany": "{count} folders",
     "refresh": "Refresh",
     "preview": "Preview",
     "footerTime": "last {time}"

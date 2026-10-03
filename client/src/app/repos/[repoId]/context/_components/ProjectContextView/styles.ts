@@ -35,7 +35,9 @@ export const s = {
     flexShrink: 0,
     color: active ? "var(--accent)" : "var(--text-muted)",
   }),
-  itemPath: { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } satisfies CSSProperties,
+  itemText: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 } satisfies CSSProperties,
+  itemDir: { fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", direction: "rtl", textAlign: "left" } satisfies CSSProperties,
+  itemPath: { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } satisfies CSSProperties,
   right: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" } satisfies CSSProperties,
   docHead: {
     display: "flex",

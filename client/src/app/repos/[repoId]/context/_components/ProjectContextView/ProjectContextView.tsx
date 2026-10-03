@@ -59,7 +59,7 @@ export function ProjectContextView() {
               <div style={s.leftHead}>
                 <div style={s.label}>{t("page.label")}</div>
                 <div className="mono" style={s.root}>
-                  {roots.join(" ")}
+                  {roots.length === 1 ? roots[0] : t("page.rootMany", { count: roots.length })}
                 </div>
               </div>
               <div style={s.toolbar}>
@@ -72,9 +72,15 @@ export function ProjectContextView() {
                   return (
                     <button key={f.path} type="button" style={s.item(active)} onClick={() => setSelected(f.path)}>
                       <Icon.FileText size={15} style={s.itemIcon(active)} />
-                      <span className="mono" style={s.itemPath}>
-                        <span style={{ color: "var(--text-muted)" }}>{dir}</span>
-                        {name}
+                      <span style={s.itemText}>
+                        <span className="mono" style={s.itemPath}>
+                          {name}
+                        </span>
+                        {dir && (
+                          <span className="mono" style={s.itemDir}>
+                            {dir}
+                          </span>
+                        )}
                       </span>
                     </button>
                   );
