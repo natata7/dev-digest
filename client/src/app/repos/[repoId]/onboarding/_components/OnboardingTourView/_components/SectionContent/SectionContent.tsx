@@ -129,13 +129,7 @@ export function SectionContent({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={t("openPath", { path: l.path })}
-                      style={{
-                        flexShrink: 0,
-                        fontSize: 12.5,
-                        padding: "5px 9px",
-                        border: "1px solid var(--border)",
-                        borderRadius: 6,
-                      }}
+                      style={s.openLink}
                     >
                       {t("open")}
                     </a>
@@ -170,12 +164,12 @@ export function SectionContent({
               {tour.reading_path.map((it, i) => (
                 <li key={it.path} style={s.readingItem}>
                   <span style={s.badge}>{i + 1}</span>
-                  <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={s.readingBody}>
                     <div className="mono" style={s.ellipsis} title={it.path}>
                       {it.path}
                     </div>
                     {it.why && (
-                      <div style={{ ...s.muted, ...s.ellipsis }} title={it.why}>
+                      <div style={s.mutedEllipsis} title={it.why}>
                         {it.why}
                       </div>
                     )}
@@ -187,7 +181,7 @@ export function SectionContent({
         )}
 
       {!unavailable && sec.kind === "first_tasks" && tasks.length > 0 && (
-        <div className={css.tasksWrap} style={{ marginBottom: 14 }}>
+        <div className={css.tasksWrap} style={s.tasksWrapGap}>
           <div className={css.tasks}>
             {tasks.map((task) => (
               <div key={`${task.path}:${task.title}`} style={s.taskCard}>
@@ -196,7 +190,7 @@ export function SectionContent({
                 </div>
                 <div
                   className="mono"
-                  style={{ ...s.muted, ...s.ellipsis }}
+                  style={s.mutedEllipsis}
                   title={task.path}
                 >
                   {task.path}

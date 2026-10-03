@@ -57,7 +57,9 @@ export function OnboardingTourView() {
 
   const run = () => {
     setInProgress(false);
+    if (generate.isPending) return; // guard against double submit
     generate.mutate(undefined, {
+      onSuccess: () => setInProgress(false),
       onError: (e) => {
         if (e instanceof ApiError && e.code === "generation_in_progress") {
           setInProgress(true);
@@ -165,7 +167,10 @@ export function OnboardingTourView() {
               {tour.status !== "complete" && tour.reason && (
                 <div style={s.banner} role="status">
                   <span>
-                    {t(`status.${tour.status}`)} {t(`reasons.${tour.reason}`)}.
+                    {t("statusBecause", {
+                      status: t(`status.${tour.status}`),
+                      reason: t(`reasons.${tour.reason}`),
+                    })}
                   </span>
                   {isIndexReason(tour.reason) && (
                     <Button

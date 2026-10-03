@@ -34,9 +34,9 @@ export function TourHeader({
     ? format.relativeTime(new Date(tour.generated_at), new Date())
     : "";
   return (
-    <div style={{ marginBottom: 18 }}>
-      <div style={{ ...s.header, marginBottom: 0 }}>
-        <div style={{ minWidth: 0 }}>
+    <div style={s.headerWrap}>
+      <div style={s.headerRow}>
+        <div style={s.shrinkable}>
           <h1 style={s.h1}>
             {t.rich("heading", {
               name: repoName,

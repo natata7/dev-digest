@@ -21,9 +21,10 @@
     "first_tasks": "First tasks"
   },
   "status": {
-    "skeleton": "This tour was built from repository facts only.",
-    "partial": "This tour is only partly based on the index."
+    "skeleton": "This tour was built from repository facts only",
+    "partial": "This tour is only partly based on the index"
   },
+  "statusBecause": "{status} because {reason}.",
   "reasons": {
     "index_partial": "the index is partial",
     "no_index": "the repository has not been indexed yet",
