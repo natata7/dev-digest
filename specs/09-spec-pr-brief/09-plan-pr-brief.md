@@ -3,6 +3,7 @@
 Implementation Plan for [09-spec-pr-brief.md](09-spec-pr-brief.md).
 
 Approved: 2026-10-03
+Plan review: claude-opus-5-5 (subagent, different model), 2026-10-03 — sound design, 4 major + 9 minor findings, folded in as amendments A1–A13 below
 
 Status: approved, not yet implemented. Execution mode: **multi-agent**.
 
@@ -232,7 +233,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
                 └─> S6 (deep link + diff focus, page wiring) ─┴─> S7 (client tests) ────┘
 ```
 
-- [ ] **S1 — Shared contract `PrBrief` (both copies) + contract tests** · `server` (+ client copy) · deps: none · runs first, alone
+- [x] **S1 — Shared contract `PrBrief` (both copies) + contract tests** · `server` (+ client copy) · deps: none · runs first, alone
   - AC: contract basis for AC-2, 4, 5, 6, 8, 14, 15, 24, 28, 29, 30, 32
   - Files owned: `server/src/vendor/shared/contracts/brief.ts`, `client/src/vendor/shared/contracts/brief.ts`, `server/test/contracts.test.ts`
   - Work: schemas per «Міжкрокові зв'язки»; update the top-of-file doc comment. Tests: a full brief parses; `intent: null`/`blast: null`/no `history` parse; `PrBriefDraft` rejects missing `review_focus` and non-int `line`. Checkpoint: `diff` of the two files empty; typecheck both packages.
@@ -390,3 +391,19 @@ Open questions: Q1–Q3 (blocking); D0–D15 pending veto.
 - PR history in the brief, MCP exposure, posting to GitHub/GitLab, brief history/versions, auto-generation, intent/blast computation inside brief generation, localisation (spec non-goals).
 - DB migration (not needed), `reviewer-core` changes.
 - Multi-instance in-flight lock (DB advisory lock) — add when the API runs more than one process.
+
+## Review amendments (cross-model review, claude-opus-5-5, 2026-10-03) — binding for implementers
+
+- A1 [major, S6] Smart Diff loads async: `DiffTab` first renders ungrouped, then remounts grouped. Un-collapse the focused file's role group in an effect keyed on `[groups, focusPath]` (not "on mount"). `FileCard` focus must override the grouped view's `defaultOpen=false`. Scroll only after `open` has rendered lines (effect on `open` / rAF), not in the same effect as `setOpen(true)`.
+- A2 [major, S5/S6] Make `onOpenFile` and `filesCount` OPTIONAL props on `OverviewTab` in S5 so S5 and S6 typecheck independently in batch 2; S6 wires them in `page.tsx`.
+- A3 [major, S8] Seeded `pr_files` for #482 have no `patch` (`server/src/db/seed.ts` ~L156), so no hunks. S8 must either seed a patch for `src/config.ts` or document that the focus line snaps to 1; the seeded brief on #482 means "Generate" is only exercised via Refresh. S8 deps also include S5.
+- A4 [major, S3] In `generate`: `getPull(ws, prId)` (404/scoping) FIRST, then the in-flight join keyed by prId.
+- A5 `PrBrief.risks` is `Risks = { risks: Risk[] }`; `groundDraft` returns `Risk[]` — wrap on assembly; client reads `brief.risks.risks`.
+- A6 D1 filter: reviews filter linked skills by `l.enabled` only (run-executor ~L201). Use exactly the same filter as `run-executor` ("same effective set reviews receive"); do not add `l.skill.enabled` unless run-executor does.
+- A7 `classifyLlmError` returns `OnboardingLlmReason` (`contracts/knowledge.ts`); in `_shared/llm-errors.ts` alias that type (no new enum), or skip the move and just use `instanceof ConfigError` + the schema regex in brief. Prefer the least change.
+- A8 AC-20: `ReviewRecord.verdict` is nullable; `VerdictBanner` needs non-null verdict + findingsCount + blockers. Use the newest review with `verdict != null` and compute counts from it (or 0); none → plain summary.
+- A9 `getIntent` returns `PrIntentRecord` (extra keys pr_id/provider/…). Pick only `Intent` fields (via `Intent.parse`/pick) before storing.
+- A10 Caps (MAX 8) apply AFTER grounding/filtering. Tests: "10 valid → first 8".
+- A11 AC-33: client disables on `pr.files.length === 0` (matches server's `pr_files`), not `files_count`. GET 404 merges `no_brief` and PR `not_found`; client maps both to null.
+- A12 Layout follows the user's screenshots: PR Brief card on top (banner + summary), Intent and Blast radius side by side below (the mockup puts Risk areas in the Intent card; a simple list inside the PR Brief card is accepted by the assignment). Page container is capped ~1080px, so the two-column grid depends on container width.
+- A13 Store anchors as `[start,end]` ranges and snap against ranges (no giant number arrays). Schema re-prompts exceed 8k on attempts 2–3; the budget applies to the first send (AC-24/NFR-1).

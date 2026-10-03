@@ -24,6 +24,8 @@ import {
   ConventionCandidate,
   ConventionList,
   ConventionCompose,
+  PrBrief,
+  PrBriefDraft,
 } from '@devdigest/shared';
 
 /**
@@ -380,5 +382,37 @@ describe('Convention contracts', () => {
     expect(() => ConventionCompose.parse({ ...base, name: '' })).toThrow();
     expect(() => ConventionCompose.parse({ ...base, description: '' })).toThrow();
     expect(() => ConventionCompose.parse({ ...base, body: '' })).toThrow();
+  });
+});
+
+describe('PrBrief / PrBriefDraft', () => {
+  const brief = {
+    summary: 's',
+    intent: null,
+    blast: null,
+    risks: { risks: [{ kind: 'k', title: 't', explanation: 'e', severity: 'high', file_refs: ['a.ts'] }] },
+    review_focus: [{ file: 'a.ts', line: 3, reason: 'r' }],
+    head_sha: 'abc',
+    generated_at: '2026-01-01T00:00:00Z',
+    missing_inputs: ['intent', 'blast'],
+    generation: { provider: 'p', model: 'm', tokens_in: 1, tokens_out: 2, cost_usd: null, attempts: 1 },
+  };
+  it('parses without history and with null intent/blast', () => {
+    expect(PrBrief.parse(brief).history).toBeUndefined();
+  });
+  it('parses a full brief', () => {
+    const full = {
+      ...brief,
+      intent: { intent: 'i', in_scope: [], out_of_scope: [] },
+      blast: { changed_symbols: [], downstream: [], summary: '' },
+      history: { history: [] },
+    };
+    expect(PrBrief.parse(full).intent?.confidence).toBe('medium');
+  });
+  it('PrBriefDraft rejects missing review_focus and non-int line', () => {
+    const d = { summary: 's', risks: [], review_focus: [{ file: 'a', line: 1, reason: 'r' }] };
+    expect(() => PrBriefDraft.parse(d)).not.toThrow();
+    expect(() => PrBriefDraft.parse({ summary: 's', risks: [] })).toThrow();
+    expect(() => PrBriefDraft.parse({ ...d, review_focus: [{ file: 'a', line: 1.5, reason: 'r' }] })).toThrow();
   });
 });
