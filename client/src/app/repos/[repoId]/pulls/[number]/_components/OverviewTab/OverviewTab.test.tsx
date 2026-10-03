@@ -7,6 +7,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PrIntentRecord, BlastRadius } from "@devdigest/shared";
 import blastMessages from "../../../../../../../../messages/en/blast.json";
+import briefMessages from "../../../../../../../../messages/en/brief.json";
 
 const INTENT: PrIntentRecord = {
   pr_id: "pr-1",
@@ -38,6 +39,12 @@ const BLAST: BlastRadius = {
 vi.mock("@/lib/hooks/reviews", () => ({
   usePrIntent: () => ({ data: INTENT, isLoading: false }),
   useRecomputeIntent: () => ({ mutate: vi.fn(), isPending: false }),
+  usePrReviews: () => ({ data: [], isLoading: false }),
+}));
+
+vi.mock("@/lib/hooks/brief", () => ({
+  usePrBrief: () => ({ data: null, isLoading: false }),
+  useGenerateBrief: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
 }));
 
 vi.mock("@/lib/hooks/blast", () => ({
@@ -58,7 +65,7 @@ function renderOverview() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <NextIntlClientProvider locale="en" messages={{ blast: blastMessages }}>
+      <NextIntlClientProvider locale="en" messages={{ blast: blastMessages, brief: briefMessages }}>
         <OverviewTab
           prBody="Some PR body"
           prId="pr-1"
@@ -85,6 +92,17 @@ describe("OverviewTab", () => {
     // node, so RTL's getByText (own direct text only) needs the full textContent.
     expect(screen.getByText((_, el) => (el?.textContent ?? "").trim() === "1 symbols")).toBeInTheDocument();
     expect(screen.getByText("processPayment()")).toBeInTheDocument();
+  });
+
+  it("renders the PR Brief card above the Intent and Blast radius cards", () => {
+    renderOverview();
+    const brief = screen.getByText("PR Brief");
+    const intent = screen.getByText(/Add rate limiting to the public API/);
+    const blast = screen.getByText("Blast radius");
+    const follows = (a: Node, b: Node) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(brief, intent)).toBe(true);
+    expect(follows(brief, blast)).toBe(true);
+    expect(screen.getByRole("button", { name: "Generate brief" })).toBeInTheDocument();
   });
 
   it("still renders the description section below both cards", () => {
