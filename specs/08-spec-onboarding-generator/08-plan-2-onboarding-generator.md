@@ -2,7 +2,7 @@
 
 Delta Implementation Plan for **revision 2** of [08-spec-onboarding-generator.md](08-spec-onboarding-generator.md) (ACs tagged [R2-new]/[R2-changed]). Inputs: [round-2 answers](08-questions-2-onboarding-generator.md), [design analysis](08-design-analysis-onboarding-generator.md), mockups `08-mockup-onboarding-{full,top,run-reading}.png`. Base: revision 1 is implemented and committed (`53151a6`, `79e48f2`, tests `28df435`, plan [08-plan-onboarding-generator.md](08-plan-onboarding-generator.md) with decisions D0–D17, which stay in force unless a D18+ entry below overrides them).
 
-Approved: — (pending user review)
+Approved: 2026-10-03
 
 Status: draft. Nothing executed. Execution mode: **multi-agent** (recommended, D18, pending user confirmation).
 
@@ -200,14 +200,14 @@ R2-S4 (nav, vendored) ───────────────────�
 R2-T1 + R2-T2 ─> architecture review ─> R2-S6 (docs, validation, verify)
 ```
 
-- [ ] **R2-S1 — Contract: `run_steps`, `first_tasks` (optional)** · `server` (+ client mirror) · deps: none · **runs first, alone** · executor `implementer`
+- [x] **R2-S1 — Contract: `run_steps`, `first_tasks` (optional)** · `server` (+ client mirror) · deps: none · **runs first, alone** · executor `implementer`
   - AC/E: contract basis for AC-20, AC-26, AC-36, AC-40–AC-43, AC-46, AC-47, AC-52; E27
   - Files owned: `server/src/vendor/shared/contracts/knowledge.ts`, `client/src/vendor/shared/contracts/knowledge.ts` (same hunk)
   - Work: add the schemas and fields exactly as in «Міжкрокові зв'язки». No test edits: fields are optional, so existing fixtures stay valid. The new contract cases belong to R2-T1.
   - Checkpoint: server + client `pnpm typecheck`.
   - Skills: `zod`, `onion-architecture`
 
-- [ ] **R2-S2 — Server pure layer: pm, skeleton steps/tasks, validation, merge, bodies** · `server` · deps: R2-S1 · executor `implementer`
+- [x] **R2-S2 — Server pure layer: pm, skeleton steps/tasks, validation, merge, bodies** · `server` · deps: R2-S1 · executor `implementer`
   - AC/E: AC-8 (lockfile → pm), AC-15, AC-20, AC-26, AC-38, AC-40 (output schema), AC-41, AC-42, AC-53 (skeleton body has no score); E9, E22, E23, E29
   - Files owned: `server/src/modules/onboarding/constants.ts`, `server/src/modules/onboarding/helpers.ts`, `server/src/modules/onboarding/facts.ts`
   - Work:
@@ -230,7 +230,7 @@ R2-T1 + R2-T2 ─> architecture review ─> R2-S6 (docs, validation, verify)
   - Checkpoint: `pnpm typecheck`. **Expected red** in the hermetic SS/SI LLM-path tests until R2-T1 updates fixtures (D20). Don't "fix" the tests here.
   - Skills: `onion-architecture`, `zod`, `security`, `typescript-expert`
 
-- [ ] **R2-S3 — Service wiring, prompt, log** · `server` · deps: R2-S2 · executor `implementer`
+- [x] **R2-S3 — Service wiring, prompt, log** · `server` · deps: R2-S2 · executor `implementer`
   - AC/E: AC-15, AC-18 (still one call), AC-20, AC-22, AC-26, AC-28 (unchanged prev tour may lack fields), AC-40, NFR-3, NFR-5
   - Files owned: `server/src/modules/onboarding/service.ts`, `server/src/prompts/onboarding.system.md`
   - Work:
@@ -245,13 +245,13 @@ R2-T1 + R2-T2 ─> architecture review ─> R2-S6 (docs, validation, verify)
     - Still exactly one `completeStructured` call (AC-40).
   - Skills: `onion-architecture`, `security`
 
-- [ ] **R2-S4 — Sidebar position + icon** · `client` · deps: none (parallel with anything after the gate OK) · executor `implementer` · **sanctioned vendored edit (D19)**
+- [x] **R2-S4 — Sidebar position + icon** · `client` · deps: none (parallel with anything after the gate OK) · executor `implementer` · **sanctioned vendored edit (D19)**
   - AC/E: AC-1 (AC-24 unchanged, `activeKeyFor` untouched)
   - Files owned: `client/src/vendor/ui/nav.ts` (one hunk)
   - Mockups: `08-mockup-onboarding-full.png`, `08-mockup-onboarding-top.png` (sidebar: order + graph icon + active state)
   - Skills: `ui-architecture`
 
-- [ ] **R2-S5 — Tour page re-layout per mockups** · `client` · deps: R2-S1 (mirror types). Codes against the unchanged HTTP API, so it runs in parallel with R2-S2/S3 · executor `implementer`
+- [x] **R2-S5 — Tour page re-layout per mockups** · `client` · deps: R2-S1 (mirror types). Codes against the unchanged HTTP API, so it runs in parallel with R2-S2/S3 · executor `implementer`
   - AC/E: AC-3, AC-7, AC-14, AC-16, AC-29, AC-36, AC-37, AC-39, AC-43–AC-55, NFR-6; E24–E28
   - Files owned:
     - `client/src/app/repos/[repoId]/onboarding/_components/OnboardingTourView/**`:

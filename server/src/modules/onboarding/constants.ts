@@ -16,6 +16,12 @@ export const CHAINS_MAX = 5;
 export const WHY_MAX = 200;
 export const TITLE_MAX = 120;
 export const BODY_MAX = 8000;
+export const RUN_STEPS_MAX = 8;
+export const FIRST_TASKS_MAX = 5;
+export const NOTE_MAX = 200;
+export const TASK_TITLE_MAX = 120;
+/** Skeleton text for sections with no index data; the client mirrors it (D26). */
+export const UNAVAILABLE_PREFIX = 'Unavailable — index';
 /** Hard cap on directory entries visited by the clone walk. */
 export const WALK_VISIT_CAP = 50_000;
 /** Directory depth (root = 0) for manifests / structure. */
@@ -53,5 +59,8 @@ export const OnboardingLlmOutput = z.object({
     }),
   ),
   reading_why: z.array(z.object({ path: z.string(), why: z.string() })),
+  // Required-nullable: strict json_schema rejects .optional() (D20).
+  run_steps: z.array(z.object({ command: z.string(), note: z.string().nullable() })).nullable(),
+  first_tasks: z.array(z.object({ title: z.string(), path: z.string() })).nullable(),
 });
 export type OnboardingLlmOutput = z.infer<typeof OnboardingLlmOutput>;

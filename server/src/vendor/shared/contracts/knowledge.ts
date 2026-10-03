@@ -104,6 +104,16 @@ export type OnboardingCoverage = z.infer<typeof OnboardingCoverage>;
 export const OnboardingRankingBasis = z.enum(['pagerank', 'pagerank_hotness']);
 export type OnboardingRankingBasis = z.infer<typeof OnboardingRankingBasis>;
 
+export const OnboardingRunStep = z.object({
+  command: z.string(),
+  note: z.string().nullable(),
+  source: OnboardingSectionSource,
+});
+export type OnboardingRunStep = z.infer<typeof OnboardingRunStep>;
+
+export const OnboardingFirstTask = z.object({ title: z.string(), path: z.string() });
+export type OnboardingFirstTask = z.infer<typeof OnboardingFirstTask>;
+
 export const Onboarding = z.object({
   sections: z.array(OnboardingSection).length(5),
   reading_path: z.array(OnboardingReadingItem),
@@ -119,6 +129,9 @@ export const Onboarding = z.object({
   tokens_in: z.number().int().nullable(),
   tokens_out: z.number().int().nullable(),
   cost_usd: z.number().nullable(),
+  // optional: tours stored before revision 2 omit them; no .max (caps enforced server-side)
+  run_steps: z.array(OnboardingRunStep).optional(),
+  first_tasks: z.array(OnboardingFirstTask).optional(),
 });
 export type Onboarding = z.infer<typeof Onboarding>;
 

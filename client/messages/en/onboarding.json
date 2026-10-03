@@ -1,6 +1,5 @@
 {
-  "title": "Onboarding tour",
-  "subtitle": "A guided tour of this repository for new contributors.",
+  "title": "Onboarding Tour",
   "generate": "Generate onboarding tour",
   "regenerate": "Regenerate",
   "generating": "Generating onboarding tour…",
@@ -15,10 +14,10 @@
     "body": "A tour has 5 sections, in this order:"
   },
   "sectionNames": {
-    "architecture": "Architecture",
+    "architecture": "Architecture overview",
     "critical_paths": "Critical paths",
-    "local_run": "Run locally",
-    "reading_order": "Reading order",
+    "local_run": "How to run locally",
+    "reading_order": "Guided reading path",
     "first_tasks": "First tasks"
   },
   "status": {
@@ -47,12 +46,24 @@
     "reading_path": "Reading path",
     "critical_paths": "Critical paths"
   },
-  "readingScore": "score {score}",
   "footer": {
     "model": "Model {model}",
     "tokens": "{tokensIn} in / {tokensOut} out",
     "costUnknown": "cost unknown",
     "generatedAt": "Generated {when}",
     "noLlm": "Generated without LLM"
-  }
+  },
+  "heading": "Onboarding for <b>{name}</b>",
+  "repoFallback": "this repository",
+  "subtitleIndexed": "Generated from index of {count} files · generated {when}",
+  "subtitleNoIndex": "Generated without an index · generated {when}",
+  "shareLink": "Share link",
+  "shareManual": "Copy this link",
+  "copied": "Copied",
+  "copyCommand": "Copy command",
+  "copyManual": "Press Ctrl+C / Cmd+C to copy",
+  "open": "Open",
+  "openPath": "Open {path}",
+  "toc": "On this page",
+  "tocNav": "Table of contents"
 }

@@ -4,6 +4,8 @@ import {
   type OnboardingLlmReason,
   type OnboardingSection,
   type OnboardingReadingItem,
+  type OnboardingRunStep,
+  type OnboardingFirstTask,
 } from '@devdigest/shared';
 import type { Container } from '../../platform/container.js';
 import { AppError, NotFoundError } from '../../platform/errors.js';
@@ -16,6 +18,8 @@ import { collectCloneFacts } from './facts.js';
 import {
   buildFacts,
   buildSkeleton,
+  buildSkeletonFirstTasks,
+  buildSkeletonRunSteps,
   classifyLlmError,
   filterLinks,
   mergeLlmOutput,
@@ -30,6 +34,9 @@ const SECTION_ORDER = ['architecture', 'critical_paths', 'local_run', 'reading_o
 interface LlmSuccess {
   sections: OnboardingSection[];
   reading_path: OnboardingReadingItem[];
+  run_steps: OnboardingRunStep[];
+  first_tasks: OnboardingFirstTask[];
+  dropped: { run_steps: number; first_tasks: number };
   model: string;
   tokensIn: number;
   tokensOut: number;
@@ -96,6 +103,8 @@ export class OnboardingService {
         ...base,
         sections: skeleton,
         reading_path: facts.readingPath,
+        run_steps: buildSkeletonRunSteps(facts),
+        first_tasks: buildSkeletonFirstTasks(facts),
         status: 'skeleton',
         reason,
         generated_at: new Date().toISOString(),
@@ -108,6 +117,7 @@ export class OnboardingService {
       let result: Onboarding;
       let dropped: string[] = [];
       let llmReason: OnboardingLlmReason | null = null;
+      let llmDropped = { run_steps: 0, first_tasks: 0 };
       let regenerationError: OnboardingLlmReason | null = null;
 
       if (!decision.llm) {
@@ -128,11 +138,14 @@ export class OnboardingService {
             await this.save(repoId, result);
           }
         } else {
+          llmDropped = llm.dropped;
           const anyFacts = llm.sections.some((s) => s.source === 'facts');
           result = {
             ...base,
             sections: llm.sections,
             reading_path: llm.reading_path,
+            run_steps: llm.run_steps,
+            first_tasks: llm.first_tasks,
             status: anyFacts || decision.reason === 'index_partial' ? 'partial' : 'complete',
             reason: decision.reason,
             generated_at: new Date().toISOString(),
@@ -168,6 +181,8 @@ export class OnboardingService {
             reading_path: cov.reading_path.truncated,
           },
           walkTruncated: clone.walkTruncated,
+          runSteps: { kept: result.run_steps?.length ?? 0, dropped: llmDropped.run_steps },
+          firstTasks: { kept: result.first_tasks?.length ?? 0, dropped: llmDropped.first_tasks },
           droppedCategories: dropped,
           tokensIn: result.tokens_in,
           tokensOut: result.tokens_out,

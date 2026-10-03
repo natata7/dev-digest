@@ -15,6 +15,7 @@ import {
   WALK_MAX_DEPTH,
   WALK_VISIT_CAP,
 } from './constants.js';
+import { detectPackageManager } from './helpers.js';
 import type { CloneFacts, ManifestFact, ScriptFact } from './helpers.js';
 
 const EXCLUDED = new Set<string>(EXCLUDED_DIRS);
@@ -141,5 +142,6 @@ export async function collectCloneFacts(root: string): Promise<CloneFacts> {
     env: envFiles,
     readme: readmeText && readmeName ? { path: readmeName, excerpt: readmeText } : null,
     walkTruncated: w.truncated,
+    packageManager: detectPackageManager(w.rootFiles),
   };
 }
