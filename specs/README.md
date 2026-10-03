@@ -11,4 +11,4 @@ Layout: `NN-spec-<feature-name>/` (next free `NN` in this folder, lowercase-hyph
 | `NN-questions-<N>-<feature>.md` | Clarification round N (blocking questions + answers) |
 | `NN-design-analysis-<feature>.md` | Design/mockup analysis: gaps, uncovered edge cases, module interactions, UX proposals |
 
-Written by the [specreator](../.claude/agents/specreator.md) agent; consumed by [implementation-planner](../.claude/agents/implementation-planner.md). Specs describe behavior, workflows and inter-service contracts — not implementation details. Long-lived architecture lives in `docs/`, not here.
+Written by the [spec-creator](../.claude/agents/spec-creator.md) agent; consumed by [implementation-planner](../.claude/agents/implementation-planner.md). Specs describe behavior, workflows and inter-service contracts — not implementation details. Long-lived architecture lives in `docs/`, not here.

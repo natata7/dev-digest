@@ -1,6 +1,6 @@
 ---
 name: workflow-retro
-description: Manual-only retrospective of a finished multi-agent workflow (e.g. /implement, specreator → planner → implementer → reviewer → verifier). Reports tokens, agent count and launch order, friction, duplicated work and gaps, proposes improvements, and appends a ledger entry to docs/retro/ledger.md. Run only when the user types /workflow-retro.
+description: Manual-only retrospective of a finished multi-agent workflow (e.g. /implement, spec-creator → planner → implementer → reviewer → verifier). Reports tokens, agent count and launch order, friction, duplicated work and gaps, proposes improvements, and appends a ledger entry to docs/retro/ledger.md. Run only when the user types /workflow-retro.
 disable-model-invocation: true
 ---
 

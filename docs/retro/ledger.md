@@ -22,4 +22,28 @@ Entries appended by the manual `/workflow-retro` skill. Older entries are never 
   4. Require a "Read: plan/spec/INSIGHTS" line in every implementer report; reject otherwise (S, implementer prompt).
   5. Plan template: list edits to vendored files needing user decision before the run (S).
   6. Pass a short shared INSIGHTS digest instead of each agent re-reading (M).
-- Status: open
+- Status: adopted 2026-10-03
+
+## 2026-10-03 — spec→plan→implement→test→verify (multi-agent) — Onboarding Generator (spec 08)
+- Mode: in-context · Outcome: partial (code + tests green, 3 CSS ACs + NFR-1/2/6 + AI-content UI not verified, R2-S6 docs skipped, cross-model plan review skipped)
+- Cost: ≈1,875k subagent tokens (in/out split n/a; orchestrator n/a; $ n/a — rates not loaded) · Fix-loop: ≈7% (132k: AC-4/33 fix, UI-gate fixes, AC-32 fix + tests) · Rework from late design: ≈53% (994k = whole rev 2) · Bottleneck: implementation-planner (187k + 172k = 19%, 532 s + 438 s wall-clock; big reads of code + restating the plan) · Agents: 29 (rev1: specreator → planner → S1 → S2 ‖ S6 ‖ S7 → S3 → S4 → arch ‖ test S5 ‖ test S8 → fix → verifier; rev2: design-analysis → spec → plan2 → S1 → S2 ‖ S4 ‖ S5 → S3 ‖ T1 → T2 → arch ‖ UI-gate → fix → tests → fix → verifier)
+- Friction:
+  - Never asked whether a design existed; specreator/planner reports and plan header said "design: none". User: "ти навіть не спитав чи є дизайн". Result: whole rev 2 (design analysis, spec rev 2, delta plan 172k, 7 impl/test agents). Repeat of 2026-10-02 "UI built without mockups".
+  - Subagents cannot use AskUserQuestion (specreator hand-back, planner hand-back): all 6 clarification categories and D0–D17 were answered "by recommendation"; user only saw them at the approval gate.
+  - Cross-model review of the plan, explicitly requested in the task, was never run (no tool for another vendor; `/implement` has no such gate).
+  - `/implement` says "Don't commit" while the task asked for a commit per stage — resolved by manual commits between steps.
+  - Dev-stack UI gate (96k) found 4 bugs typecheck/tests missed: duplicate POST, stuck "already generating" banner (found by a new test, fixed in a 3rd round), lowercase/raw-code banner copy, stray inline styles — all at the very end.
+  - Verifier ran both full suites twice (76.8k, 73.1k); rev-1 validation file went stale and needed a second file.
+  - Spec drift accumulates silently: D2 (maxRetries 0), D7 (dep cap), `isJunkPath` root dirs worked around in onboarding instead of fixed at source.
+- Duplication / misses:
+  - plan 1 ×~10 agents, spec ×~10, plan 2 ×~8, mockups ×4 (design-analysis, S5', UI gate, test T2 via spec), server/INSIGHTS digest passed by line range (helped); no shared digest for spec/plan (from prompts; deep mode would give real counts).
+  - Missed: design question, cross-model review, NFR-1/2 measurements (no `factsMs` log), R2-S6 docs/INSIGHTS, real-LLM content verification (one real run → `llm_invalid_output` skeleton), spec not updated for D2/D7/D20.
+- Proposals:
+  1. specreator + implementation-planner step 1: ask first "is there a design/mockup/Figma?" via the orchestrator; no "design: none" without an explicit user answer (S, agent prompts) — repeat of 2026-10-02 #1, saves ≈50% rework.
+  2. Orchestrator owns clarification: subagents return a numbered question list with recommendations, main asks via AskUserQuestion and resumes the agent with SendMessage (S/M, pipeline/command text).
+  3. Add a plan-review gate before `/implement` (cross-model or second-model reviewer agent, or explicit "skipped by user") (S/M, command).
+  4. Run the browser UI gate right after the first client step, not at the end, and again only on changed screens (S, /implement).
+  5. Delta-plan mode for the planner: reuse unchanged tasks/decisions instead of re-reading everything (172k) (M, planner prompt).
+  6. Shared spec/plan digest (≤150 lines) passed to implementers/test-writers instead of full files (M) — carried from 2026-10-02 #6.
+  7. `/implement --commit` (commit per batch) so the command and "commit each stage" agree (S).
+- Status: adopted 2026-10-03 (1,2 in specreator/implementation-planner prompts; 3,4,6,7 in /implement; 5 in planner Крок 0)
