@@ -53,6 +53,7 @@
     "blockers": " · {count} blockers"
   },
   "smartDiff": {
+    "fileNotInDiff": "File not in this PR's diff: {path}",
     "coreLabel": "Core",
     "testsLabel": "Tests",
     "wiringLabel": "Wiring",

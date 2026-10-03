@@ -65,7 +65,22 @@ export default function PRDetailPage() {
     else sp.set(key, val);
     router.replace(`/repos/${repoId}/pulls/${number}${sp.toString() ? `?${sp.toString()}` : ""}`);
   };
-  const setTab = (t: string) => setParam("tab", t);
+  // Switching tabs clears any file/line deep link so a stale focus never reapplies.
+  const setTab = (t: string) => {
+    const sp = new URLSearchParams(search.toString());
+    sp.set("tab", t);
+    sp.delete("file");
+    sp.delete("line");
+    router.replace(`/repos/${repoId}/pulls/${number}?${sp.toString()}`);
+  };
+  const openFile = (path: string, line?: number) => {
+    const sp = new URLSearchParams(search.toString());
+    sp.set("tab", "diff");
+    sp.set("file", path);
+    if (line != null) sp.set("line", String(line));
+    else sp.delete("line");
+    router.replace(`/repos/${repoId}/pulls/${number}?${sp.toString()}`);
+  };
 
   // Reviews come newest-first; each is its own run (grouped into accordions).
   const runs = reviews ?? [];
@@ -144,6 +159,8 @@ export default function PRDetailPage() {
             repoId={repoId}
             provider={repoProvider}
             repoFullName={repoFullName}
+            onOpenFile={openFile}
+            filesCount={pr.files.length}
           />
         )}
 
@@ -180,6 +197,8 @@ export default function PRDetailPage() {
             files={pr.files}
             canComment={pr.status === "open"}
             provider={repoProvider}
+            focusPath={search.get("file")}
+            focusLine={Number(search.get("line")) || undefined}
           />
         )}
       </div>

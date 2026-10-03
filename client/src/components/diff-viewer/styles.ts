@@ -90,6 +90,14 @@ export function lineRowFor(kind: Line["kind"]): CSSProperties {
   return { display: "flex", alignItems: "stretch", fontSize: 13, lineHeight: "20px", background };
 }
 
+/** Outline marking the line a deep link (brief review focus) points at. */
+export const lineFocusedStyle: CSSProperties = {
+  outlineWidth: 1,
+  outlineStyle: "solid",
+  outlineColor: "var(--accent, #3b82f6)",
+  outlineOffset: -1,
+};
+
 /** Gutter sign colour per line kind. */
 export function lineSignFor(kind: Line["kind"]): CSSProperties {
   return {

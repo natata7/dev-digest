@@ -239,7 +239,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
   - Work: schemas per «Міжкрокові зв'язки»; update the top-of-file doc comment. Tests: a full brief parses; `intent: null`/`blast: null`/no `history` parse; `PrBriefDraft` rejects missing `review_focus` and non-int `line`. Checkpoint: `diff` of the two files empty; typecheck both packages.
   - Skills: `zod`, `onion-architecture`
 
-- [ ] **S2 — Brief pure helpers + shared LLM error classification** · `server` · deps: S1
+- [x] **S2 — Brief pure helpers + shared LLM error classification** · `server` · deps: S1
   - AC: AC-4 (missing list + prompt mention), AC-11, AC-12, AC-13, AC-14, AC-15, AC-26, AC-27, AC-34 (usable/partial rule), NFR-1, NFR-4 (counts source); E2, E3, E5, E7, E8, E10, E11, E17, E19, E22
   - Files owned: `server/src/modules/_shared/llm-errors.ts` (new), `server/src/modules/onboarding/helpers.ts` (replace `classifyLlmError` body with a re-export only; no behaviour change), `server/src/modules/brief/constants.ts`, `server/src/modules/brief/helpers.ts`
   - Work: everything in the S2 signature block. `buildFactsMessage` sections in fixed order (missing-inputs line → intent → blast summary + callers `file:line name` (≤ 40, "caller list may be incomplete" note when partial) → diff rows sorted by churn DESC then path ASC as `path +A -D role ranges` → description → spec heads); each untrusted block wrapped; per-section caps by `approxTokens`; then drop order spec → description tail → callers beyond 10 → diff rows from the low-churn end (top 20 never dropped, one `+N more files (A additions, D deletions)` line). Diff rows contain numbers and paths only — never patch lines.
@@ -261,7 +261,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
   - Files owned: `server/test/brief-helpers.test.ts`, `server/test/brief-service.test.ts`, `server/test/brief.it.test.ts`, `server/test/llm-errors.test.ts` (optional; onboarding tests already cover classification)
   - Skills: `onion-architecture` (`rules/testing-strategy.md`), `security`
 
-- [ ] **S5 — Client hooks, copy, PR Brief card, Overview layout** · `client` · deps: S1 (contract); codes against the S3 HTTP signature (can run in parallel with S2–S4)
+- [x] **S5 — Client hooks, copy, PR Brief card, Overview layout** · `client` · deps: S1 (contract); codes against the S3 HTTP signature (can run in parallel with S2–S4)
   - AC: AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8, AC-9, AC-10, AC-15 (display sort), AC-18 (risk file buttons call `onOpenFile(path)`), AC-20, AC-21, AC-22, AC-23, AC-30, AC-32 (muted line), AC-33, AC-36 (message), NFR-5, NFR-6; E1, E5, E6, E11, E13, E14, E16, E18, E20
   - Files owned: `client/src/lib/hooks/brief.ts` (new), `client/messages/en/brief.json` (rewrite; old keys unused), `client/src/app/repos/[repoId]/pulls/[number]/_components/OverviewTab/{OverviewTab.tsx,styles.ts}`, `client/src/app/repos/[repoId]/pulls/[number]/_components/PrBriefCard/**` (new: `PrBriefCard.tsx`, `styles.ts`, `helpers.ts`, `constants.ts`, `index.ts`, optional `_components/RiskList`, `_components/FocusList`)
   - Work:
@@ -270,7 +270,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
     - `OverviewTab`: `PrBriefCard` first, then a grid with `IntentCard` + `BlastRadiusCard` (D12), description last; new props per seam.
   - Skills: `ui-architecture`, `react-best-practices`, `next-best-practices`, `frontend-architecture`
 
-- [ ] **S6 — Files changed deep link + file/line focus** · `client` · deps: S1; parallel with S5 (file-disjoint)
+- [x] **S6 — Files changed deep link + file/line focus** · `client` · deps: S1; parallel with S5 (file-disjoint)
   - AC: AC-16, AC-17, AC-18 (navigation part), AC-19; E9, E19
   - Files owned: `client/src/app/repos/[repoId]/pulls/[number]/page.tsx`, `client/src/app/repos/[repoId]/pulls/[number]/_components/DiffTab/{DiffTab.tsx,helpers.ts,styles.ts}`, `client/src/components/diff-viewer/DiffViewer/DiffViewer.tsx`, `client/src/components/diff-viewer/FileCard/FileCard.tsx`, `client/src/components/diff-viewer/CodeLine/CodeLine.tsx`, `client/src/components/diff-viewer/styles.ts`, `client/messages/en/prReview.json` (`smartDiff.fileNotInDiff`)
   - Work: page `openFile` + pass props (seam); `setTab` clears `file`/`line` (D9). DiffTab: `focusPath`/`focusLine` props; if `focusPath` not in `files` → notice naming the path (AC-19, D11); else un-collapse its role group on mount and pass `focus` to the `DiffViewer` holding it. `FileCard`: when `focus.path === file.path` → `setOpen(true)` in an effect, then `scrollIntoView` the matching `CodeLine` (`newNo === line`, highlighted style) or the header (AC-16/17). Pure helper `roleOfPath(groups, path)` in `DiffTab/helpers.ts`.

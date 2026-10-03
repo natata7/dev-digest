@@ -16,7 +16,7 @@ import { platformLabel } from "@/lib/repo-urls";
 import type { FindingRecord, PrFile, RepoProvider, SmartDiffRole } from "@devdigest/shared";
 import { FindingCard } from "../FindingCard";
 import { ROLE_ORDER, DEFAULT_COLLAPSED_ROLES, ROLE_LABEL_KEY } from "./constants";
-import { groupFiles, filesWithFindingsCount } from "./helpers";
+import { groupFiles, filesWithFindingsCount, roleOfPath } from "./helpers";
 import { s, chevronFor } from "./styles";
 
 interface DiffTabProps {
@@ -26,9 +26,12 @@ interface DiffTabProps {
   /** Inline commenting is offered only on open PRs (the host rejects otherwise). */
   canComment?: boolean;
   provider?: RepoProvider;
+  /** Deep link (?file=&line=): open this file/line in the diff. */
+  focusPath?: string | null;
+  focusLine?: number;
 }
 
-export function DiffTab({ prId, filesCount, files, canComment, provider = "github" }: DiffTabProps) {
+export function DiffTab({ prId, filesCount, files, canComment, provider = "github", focusPath, focusLine }: DiffTabProps) {
   const t = useTranslations("prReview");
   const { data: comments } = usePrComments(prId);
   const create = useCreatePrComment(prId);
@@ -94,6 +97,24 @@ export function DiffTab({ prId, filesCount, files, canComment, provider = "githu
   const groups = React.useMemo(() => groupFiles(smartDiff, files), [smartDiff, files]);
   const canGroup = grouped && !!smartDiff && !smartDiffError;
 
+  const focus = React.useMemo(
+    () => (focusPath && files.some((f) => f.path === focusPath) ? { path: focusPath, line: focusLine } : undefined),
+    [focusPath, focusLine, files],
+  );
+  // Smart Diff loads async (view first renders ungrouped, then grouped), so
+  // un-collapse the focused file's role group whenever groups/focus change.
+  React.useEffect(() => {
+    if (!focusPath) return;
+    const role = roleOfPath(groups, focusPath);
+    if (!role) return;
+    setCollapsedRoles((cur) => {
+      if (!cur.has(role)) return cur;
+      const next = new Set(cur);
+      next.delete(role);
+      return next;
+    });
+  }, [groups, focusPath]);
+
   const toggleRole = (role: SmartDiffRole) => {
     setCollapsedRoles((cur) => {
       const next = new Set(cur);
@@ -134,6 +155,10 @@ export function DiffTab({ prId, filesCount, files, canComment, provider = "githu
         <div style={s.noReviewHint}>{t("smartDiff.noReviewYet")}</div>
       )}
 
+      {focusPath && !focus && (
+        <div style={s.noReviewHint}>{t("smartDiff.fileNotInDiff", { path: focusPath })}</div>
+      )}
+
       {canGroup ? (
         <div style={s.groupsWrap}>
           {ROLE_ORDER.map((role) => {
@@ -162,6 +187,7 @@ export function DiffTab({ prId, filesCount, files, canComment, provider = "githu
                     commenting={commenting}
                     findings={findingsApi}
                     defaultOpen={DEFAULT_COLLAPSED_ROLES.includes(role) ? false : undefined}
+                    focus={focus}
                   />
                 )}
               </div>
@@ -169,7 +195,7 @@ export function DiffTab({ prId, filesCount, files, canComment, provider = "githu
           })}
         </div>
       ) : (
-        <DiffViewer files={files} commenting={commenting} findings={findingsApi} />
+        <DiffViewer files={files} commenting={commenting} findings={findingsApi} focus={focus} />
       )}
     </section>
   );
