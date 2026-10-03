@@ -27,6 +27,9 @@ Same finding as `server/INSIGHTS.md`'s entry of the same title — this repo had
 
 ## Mistake
 
+### 2026-10-03 — splitting one component into two that each call `useMutation` loses the pending state (PR Brief)
+`PrBriefCard` and `PrBriefEmpty` each called `useGenerateBrief()`; the POST fired in the child never flipped the parent's `gen.isPending`, so the first-generation skeleton never showed (found by a `PrBriefCard.test.tsx` case, fixed by passing `gen` down as a prop). React Query mutations are per-hook-instance — share one `useMutation` result, not the hook. Related test trap: a newly mounted `useQuery` observer refetches stale data, so a POST stub must also update the GET stub (`post.mockImplementation(async () => (stored = BRIEF))`), otherwise the refetch overwrites the `setQueryData` result with the 404 → `null`.
+
 ### 2026-09-19 — `/skills` click must open the editor, not a second preview surface
 The `/skills/:id` page already is list + Config/Preview/Versions (`client/src/app/skills/[id]/page.tsx`). A standalone `SkillPreviewPanel` duplicated Preview and hid edit. Cards on `/skills` navigate like agents: `router.push(\`/skills/${id}?tab=config\`)`. The previous Pattern about filling AppFrame for that panel is obsolete with the panel gone.
 
