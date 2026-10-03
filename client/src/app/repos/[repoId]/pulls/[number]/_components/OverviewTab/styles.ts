@@ -1,6 +1,13 @@
 import type { CSSProperties } from "react";
 
 export const s = {
+  // ponytail: auto-fit approximates the 2-column breakpoint (inline styles cannot hold @media)
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(440px, 1fr))",
+    gap: 16,
+    alignItems: "start",
+  } satisfies CSSProperties,
   descriptionBox: {
     border: "1px solid var(--border)",
     borderRadius: 8,
