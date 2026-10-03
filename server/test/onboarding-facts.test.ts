@@ -113,6 +113,25 @@ describe('structure (AC-10, AC-16)', () => {
   });
 });
 
+describe('package manager (AC-8, E29)', () => {
+  it.each([
+    [['pnpm-lock.yaml', 'yarn.lock', 'bun.lockb', 'package-lock.json'], 'pnpm'],
+    [['yarn.lock', 'bun.lockb'], 'yarn'],
+    [['bun.lockb'], 'bun'],
+    [['bun.lock'], 'bun'],
+    [['package-lock.json'], 'npm'],
+    [[], 'npm'],
+  ])('lockfiles %j -> %s', async (files, pm) => {
+    for (const f of files) await put(f);
+    expect((await collectCloneFacts(root)).packageManager).toBe(pm);
+  });
+
+  it('nested lockfile does not count', async () => {
+    await put('apps/web/pnpm-lock.yaml');
+    expect((await collectCloneFacts(root)).packageManager).toBe('npm');
+  });
+});
+
 describe('determinism (AC-15)', () => {
   it('two collections over the same dir are identical', async () => {
     await put('package.json', pkg({ name: 'n', scripts: { a: 'b' }, dependencies: { z: '1', a: '1' } }));

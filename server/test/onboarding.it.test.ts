@@ -19,6 +19,8 @@ const KINDS = ['architecture', 'critical_paths', 'local_run', 'reading_order', '
 const OUT = {
   sections: KINDS.map((kind) => ({ kind, title: kind, body: `body ${kind}`, diagram: null, links: [] })),
   reading_why: [],
+  run_steps: [{ command: 'npm run test', note: null }],
+  first_tasks: [{ title: 'Read core', path: 'src/core.ts' }],
 };
 
 function stubIntel(status: 'full' | 'degraded', sha = 'sha-1'): RepoIntel {
@@ -87,6 +89,8 @@ d('onboarding routes', () => {
     const post = await app.inject({ method: 'POST', url: `/repos/${id}/onboarding` });
     expect(post.statusCode).toBe(200);
     expect(post.json().status).toBe('complete');
+    expect(post.json().run_steps).toEqual([{ command: 'npm run test', note: null, source: 'llm' }]);
+    expect(post.json().first_tasks).toEqual([{ title: 'Read core', path: 'src/core.ts' }]);
     expect(count(llm)).toBe(1);
 
     const get = await app.inject({ method: 'GET', url: `/repos/${id}/onboarding` });

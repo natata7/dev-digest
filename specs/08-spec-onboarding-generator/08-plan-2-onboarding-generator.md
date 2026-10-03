@@ -308,13 +308,13 @@ R2-T1 + R2-T2 ─> architecture review ─> R2-S6 (docs, validation, verify)
   - Checkpoint: client `pnpm typecheck`, `pnpm lint`. CV is **expected red** until R2-T2 (headings and layout changed).
   - Skills: `ui-architecture`, `react-best-practices`, `next-best-practices`, `frontend-architecture`
 
-- [ ] **R2-T1 — Server tests (rewrite/extend 28df435 from spec)** · `server` · executor `test-writer` · deps: R2-S3
+- [x] **R2-T1 — Server tests (rewrite/extend 28df435 from spec)** · `server` · executor `test-writer` · deps: R2-S3
   - AC/E: AC-8, AC-15, AC-20, AC-26, AC-40, AC-41, AC-42, AC-52 (contract), NFR-5; E9, E22, E23, E27, E29
   - Files owned: `server/test/onboarding-helpers.test.ts`, `server/test/onboarding-service.test.ts`, `server/test/onboarding-facts.test.ts`, `server/test/onboarding.it.test.ts`, `server/test/contracts.test.ts`
   - Must update: SS `goodOut` and SI `OUT` fixtures gain `run_steps`/`first_tasks` (D20). SH `buildSkeleton` cases "local run has scripts verbatim…" and "first tasks: … npm run test" are rewritten to AC-26 R2 (run_steps / first_tasks items, `<pm> run`, body without script list, no score in the reading body).
   - Skills: `onion-architecture`, `security`
 
-- [ ] **R2-T2 — Client tests (rewrite/extend 28df435 from spec)** · `client` · executor `test-writer` · deps: R2-S4, R2-S5
+- [x] **R2-T2 — Client tests (rewrite/extend 28df435 from spec)** · `client` · executor `test-writer` · deps: R2-S4, R2-S5
   - AC/E: AC-1, AC-2, AC-3, AC-7, AC-14, AC-16, AC-29, AC-31, AC-36, AC-37, AC-39, AC-43–AC-55, NFR-6; E24–E28
   - Files owned: `client/src/app/repos/[repoId]/onboarding/_components/OnboardingTourView/OnboardingTourView.test.tsx`, `.../OnboardingTourView/helpers.test.ts`, `client/src/components/app-shell/helpers.test.ts`, `client/src/lib/repo-urls.test.ts` (new or existing; for `repoDisplayName`, only if not already covered by Conventions `helpers.test.ts`)
   - Notes:

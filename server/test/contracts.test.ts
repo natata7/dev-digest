@@ -164,6 +164,15 @@ describe('AI contracts parse fixtures', () => {
       cost_usd: null,
     };
     expect(() => Onboarding.parse(tour)).not.toThrow();
+    // AC-52 / E27: revision-1 tour (no run_steps/first_tasks) parses; revision-2 fields parse too
+    expect(Onboarding.safeParse(tour).success).toBe(true);
+    const r2 = {
+      ...tour,
+      run_steps: [{ command: 'npm run dev', note: null, source: 'facts' }],
+      first_tasks: [{ title: 'Read a', path: 'a.ts' }],
+    };
+    expect(Onboarding.parse(r2).run_steps).toHaveLength(1);
+    expect(Onboarding.safeParse({ ...r2, run_steps: [{ command: 'x', note: null }] }).success).toBe(false);
     // E21: old shape and wrong section count are rejected
     expect(
       Onboarding.safeParse({ sections: [{ kind: 'architecture', title: 'T', body: 'b', links: [] }] }).success,
