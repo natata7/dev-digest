@@ -245,7 +245,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
   - Work: everything in the S2 signature block. `buildFactsMessage` sections in fixed order (missing-inputs line → intent → blast summary + callers `file:line name` (≤ 40, "caller list may be incomplete" note when partial) → diff rows sorted by churn DESC then path ASC as `path +A -D role ranges` → description → spec heads); each untrusted block wrapped; per-section caps by `approxTokens`; then drop order spec → description tail → callers beyond 10 → diff rows from the low-churn end (top 20 never dropped, one `+N more files (A additions, D deletions)` line). Diff rows contain numbers and paths only — never patch lines.
   - Skills: `onion-architecture`, `typescript-expert`, `security`
 
-- [ ] **S3 — Brief service, repository, routes, prompt** · `server` · deps: S2
+- [x] **S3 — Brief service, repository, routes, prompt** · `server` · deps: S2
   - AC: AC-1 (no call before POST), AC-4, AC-8 (GET 0 calls), AC-9, AC-10 (store only on success), AC-24, AC-25, AC-28, AC-29, AC-31, AC-32 (stored fields), AC-33, AC-34, AC-35, AC-36, NFR-2, NFR-3, NFR-4, NFR-5 (server side: plain strings only); E1, E2, E4, E5, E6, E12, E13, E14, E15, E18, E21, E23
   - Files owned: `server/src/modules/brief/repository.ts`, `server/src/modules/brief/service.ts`, `server/src/modules/brief/routes.ts`, `server/src/modules/index.ts` (register), `server/src/prompts/brief.system.md` (new)
   - Work:
@@ -257,7 +257,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
     - `brief.system.md`: role, output rules (summary 1–3 sentences what + why; ≤ 8 risks, each with ≥ 1 `file_refs` taken from the listed files; ≤ 8 focus items in reading order using listed paths and lines from listed ranges/caller lines; mention missing inputs honestly), SECURITY paragraph copied in spirit from `onboarding.system.md`. Keep ≤ ~800 tokens.
   - Skills: `onion-architecture`, `fastify-best-practices`, `drizzle-orm-patterns`, `zod`, `security`
 
-- [ ] **S4 — Server tests** · `server` · executor `test-writer` · deps: S3
+- [x] **S4 — Server tests** · `server` · executor `test-writer` · deps: S3
   - Files owned: `server/test/brief-helpers.test.ts`, `server/test/brief-service.test.ts`, `server/test/brief.it.test.ts`, `server/test/llm-errors.test.ts` (optional; onboarding tests already cover classification)
   - Skills: `onion-architecture` (`rules/testing-strategy.md`), `security`
 
@@ -276,7 +276,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
   - Work: page `openFile` + pass props (seam); `setTab` clears `file`/`line` (D9). DiffTab: `focusPath`/`focusLine` props; if `focusPath` not in `files` → notice naming the path (AC-19, D11); else un-collapse its role group on mount and pass `focus` to the `DiffViewer` holding it. `FileCard`: when `focus.path === file.path` → `setOpen(true)` in an effect, then `scrollIntoView` the matching `CodeLine` (`newNo === line`, highlighted style) or the header (AC-16/17). Pure helper `roleOfPath(groups, path)` in `DiffTab/helpers.ts`.
   - Skills: `ui-architecture`, `react-best-practices`, `next-best-practices`
 
-- [ ] **S7 — Client tests** · `client` · executor `test-writer` · deps: S5, S6
+- [x] **S7 — Client tests** · `client` · executor `test-writer` · deps: S5, S6
   - Files owned: `PrBriefCard/PrBriefCard.test.tsx`, `PrBriefCard/helpers.test.ts`, `OverviewTab/OverviewTab.test.tsx` (add `vi.mock("@/lib/hooks/brief")`, `usePrReviews` in the reviews factory, layout assertion), `DiffTab/helpers.test.ts` (extend), `DiffTab/DiffTab.test.tsx` (new), `client/src/components/diff-viewer/FileCard/FileCard.test.tsx` (new)
   - Skills: `react-testing-library`, `ui-architecture`
 
