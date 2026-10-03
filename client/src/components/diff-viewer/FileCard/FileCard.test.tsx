@@ -41,6 +41,13 @@ describe("FileCard focus", () => {
     expect(target).toHaveTextContent("second");
   });
 
+  it("falls back to the card header when the focused line is outside the rendered hunks", async () => {
+    const { container } = render(ui({ defaultOpen: false, focus: { path: "src/a.ts", line: 9999 } }));
+    await waitFor(() => expect(scroll).toHaveBeenCalled());
+    expect(container.querySelector("[data-focus-line]")).toBeNull();
+    expect(scroll.mock.contexts[0]).toBe(container.firstElementChild);
+  });
+
   it("scrolls the card itself when focus has no line", async () => {
     const { container } = render(ui({ defaultOpen: false, focus: { path: "src/a.ts" } }));
     await waitFor(() => expect(scroll).toHaveBeenCalled());

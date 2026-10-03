@@ -39,3 +39,14 @@ Not Verified (manual / browser only):
 
 ## UI gate
 Mockups were supplied. The screens were NOT visually compared in a browser in this run.
+
+## Resolved after the first report (live browser check, demo repo PR #28 + unit tests)
+- AC-16 / AC-17: clicked Review focus item #1 on PR #28 → `?tab=diff&file=…&line=1`, Files changed opened on that file, line highlighted and in view. New test: focused line outside rendered hunks → scrolls to the card header (`FileCard.test.tsx`).
+- AC-22: refresh now shows the skeleton in place of the old brief (`useBriefGenerating`, shared across component instances); previous brief is kept on failure. Verified live (skeleton → new brief) and in `PrBriefCard.test.tsx`. Spec already matched.
+- AC-3 / AC-33 / layout drift: spec text updated to the shipped layout.
+- Reload persistence: one `GET /pulls/:id/brief`, no `POST`, summary rendered immediately.
+- Grounding on real data: 7 risks + 8 focus items from a real `risk_brief` model run; 0 paths outside the PR diff ∪ Blast map.
+- Real provider call with a configured `risk_brief` key: done (OpenRouter `deepseek/deepseek-v4-flash`, 2 attempts of one call, ≈$0.0014).
+- Checks: client `vitest` 290/290, `typecheck`, `lint` pass.
+
+Still manual / not done: NFR-6 keyboard pass, E23 (restart mid-generation), e2e flow `08-pr-brief` (needs `agent-browser`), demo video.

@@ -56,6 +56,7 @@ let brief: PrBrief | null = null;
 vi.mock("@/lib/hooks/brief", () => ({
   usePrBrief: () => ({ data: brief, isLoading: false }),
   useGenerateBrief: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
+  useBriefGenerating: () => false,
 }));
 
 vi.mock("@/lib/hooks/blast", () => ({

@@ -2,7 +2,7 @@
    POST /pulls/:id/brief (generate/refresh, one LLM call). */
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "../api";
 import type { PrBrief } from "@devdigest/shared";
 
@@ -26,7 +26,13 @@ export function usePrBrief(prId: string | null | undefined) {
 export function useGenerateBrief(prId: string | null | undefined) {
   const qc = useQueryClient();
   return useMutation({
+    mutationKey: ["pr-brief-generate", prId],
     mutationFn: () => api.post<PrBrief>(`/pulls/${prId}/brief`),
     onSuccess: (data) => qc.setQueryData(["pr-brief", prId], data),
   });
+}
+
+/** True while any generate/refresh for this PR is in flight (shared across component instances). */
+export function useBriefGenerating(prId: string | null | undefined) {
+  return useIsMutating({ mutationKey: ["pr-brief-generate", prId] }) > 0;
 }

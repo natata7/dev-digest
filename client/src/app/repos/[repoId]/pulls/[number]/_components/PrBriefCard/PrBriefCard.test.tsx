@@ -111,13 +111,13 @@ describe("PrBriefCard", () => {
     expect(screen.queryByRole("button", { name: "Generate brief" })).not.toBeInTheDocument();
   });
 
-  it("pending refresh disables the Refresh button and keeps the old brief", async () => {
+  it("pending refresh shows the busy skeleton in place of the old brief", async () => {
     stored = BRIEF;
     post.mockReturnValue(new Promise(() => {}));
     renderCard();
     fireEvent.click(await screen.findByRole("button", { name: "Refresh brief" }));
-    expect(await screen.findByRole("button", { name: "Generating brief…" })).toBeDisabled();
-    expect(screen.getByText("Adds rate limiting.")).toBeInTheDocument();
+    await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).not.toBeNull());
+    expect(screen.queryByText("Adds rate limiting.")).not.toBeInTheDocument();
   });
 
   it("POST failure keeps the old brief, shows the error and Retry re-POSTs", async () => {

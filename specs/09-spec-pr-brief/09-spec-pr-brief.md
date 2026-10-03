@@ -103,7 +103,7 @@ Priority tags: **[P1]** blocking, **[P2]**, **[P3]**.
 ### Card, generation and display
 - AC-1 [P1]: ПОКИ no brief is stored for the PR, the Overview tab shall (shall) show a PR Brief card with a "Generate brief" button and no model call shall be made until the user clicks it.
 - AC-2 [P1]: КОЛИ the user clicks Generate brief and generation succeeds, the Overview tab shall (shall) show in the PR Brief card the summary, a "Risk areas" block and a "Review focus" block, without a page reload.
-- AC-3 [P1]: The Overview tab shall (shall) show the existing Intent and Blast radius blocks next to the PR Brief content (side by side at viewport width ≥ 1024 px, stacked below that). The brief shall not render a second copy of them.
+- AC-3 [P1]: The Overview tab shall (shall) show the existing Intent and Blast radius blocks next to the PR Brief content (the brief banner on top, Intent and Blast radius side by side below it — a responsive `auto-fit` grid that stacks on narrow widths; Risk areas render inside the Intent card, Review focus as its own card below). The brief shall not render a second copy of them.
 - AC-4 [P1]: ЯКЩО any of intent, blast radius, attached specs or PR description was unavailable at generation time, ТОДІ the brief shall (shall) list each missing input by name in a visible "Generated without: …" note inside the card. The model input shall also state which inputs are missing.
 - AC-5 [P1]: The system shall (shall) render every risk with at least its title, its severity and at least one file path.
 - AC-6 [P1]: The system shall (shall) render every review focus item as `file:line — reason`.
@@ -143,7 +143,7 @@ Priority tags: **[P1]** blocking, **[P2]**, **[P3]**.
 - AC-32 [P2]: The stored brief shall (shall) record provider, model, tokens in/out, cost (null when unknown) and attempts, and the card shall show them as one muted line.
 
 ### Failure and empty inputs
-- AC-33 [P1]: ЯКЩО the PR diff has zero files, ТОДІ the system shall (shall) make no model call, respond `422 empty_diff`, and the card shall show "This PR has no changed files — nothing to brief." with the Generate button disabled.
+- AC-33 [P1]: ЯКЩО the PR diff has zero files, ТОДІ the system shall (shall) make no model call, respond `422 empty_diff`, and the card shall show "This PR has no changed files — nothing to brief." with the Generate button disabled (the client disables it when `pr.files.length === 0`, so the request is normally never sent).
 - AC-34 [P1]: ЯКЩО the blast radius read throws, or returns `degraded` with reason `flag_off`, `index_failed`, `repo_too_large` or `no_data`, ТОДІ the system shall (shall) generate without blast facts and add `blast` to `missing_inputs`. With reason `index_partial` it shall use the partial data and tell the model the caller list may be incomplete.
 - AC-35 [P1]: ЯКЩО no `pr_intent` row exists for the PR, ТОДІ the system shall (shall) generate without intent and add `intent` to `missing_inputs`.
 - AC-36 [P1]: ЯКЩО the provider for `risk_brief` is not configured (no API key), ТОДІ the system shall (shall) fail with a message that names the Risk Brief model in Settings, make no model call and store nothing.
