@@ -4,15 +4,12 @@ import type {
   OnboardingCoverageCount,
   OnboardingFirstTask,
   OnboardingRunStep,
-  OnboardingLlmReason,
   OnboardingReadingItem,
   OnboardingReason,
   OnboardingSection,
   OnboardingRankingBasis,
 } from '@devdigest/shared';
 import { wrapUntrusted } from '../../platform/prompt.js';
-import { ConfigError } from '../../platform/errors.js';
-import { TimeoutError } from '../../platform/resilience.js';
 import type { EndpointFactRow, IndexState, RankedFileRow } from '../repo-intel/types.js';
 import {
   BODY_MAX,
@@ -412,12 +409,4 @@ export function mergeLlmOutput(
 
 // ---- error classification --------------------------------------------------
 
-export function classifyLlmError(err: unknown): OnboardingLlmReason {
-  if (err instanceof ConfigError) return 'llm_not_configured';
-  if (err instanceof TimeoutError) return 'llm_timeout';
-  const name = err instanceof Error ? err.name : '';
-  const msg = err instanceof Error ? err.message : String(err);
-  if (/timeout|timed out/i.test(name) || /timeout|timed out/i.test(msg)) return 'llm_timeout';
-  if (name === 'ZodError' || /schema validation|ZodError/i.test(msg)) return 'llm_invalid_output';
-  return 'llm_failed';
-}
+export { classifyLlmError } from '../_shared/llm-errors.js';
