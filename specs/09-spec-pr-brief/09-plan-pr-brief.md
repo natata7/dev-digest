@@ -280,7 +280,7 @@ S1 (contract) ──┬─> S2 (pure helpers) ─> S3 (service/API/prompt) ─> 
   - Files owned: `PrBriefCard/PrBriefCard.test.tsx`, `PrBriefCard/helpers.test.ts`, `OverviewTab/OverviewTab.test.tsx` (add `vi.mock("@/lib/hooks/brief")`, `usePrReviews` in the reviews factory, layout assertion), `DiffTab/helpers.test.ts` (extend), `DiffTab/DiffTab.test.tsx` (new), `client/src/components/diff-viewer/FileCard/FileCard.test.tsx` (new)
   - Skills: `react-testing-library`, `ui-architecture`
 
-- [ ] **S8 — Seeded brief + e2e flow (deterministic, no LLM)** · `server` + `e2e` · executor `test-writer` · deps: S3, S6 · optional (D15; veto drops it, RTL + manual check then cover AC-16)
+- [x] **S8 — Seeded brief + e2e flow (deterministic, no LLM)** · `server` + `e2e` · executor `test-writer` · deps: S3, S6 · optional (D15; veto drops it, RTL + manual check then cover AC-16)
   - AC: AC-8, AC-16 (end-to-end), AC-2 display
   - Files owned: `server/src/db/seed.ts` (one `pr_brief` row for PR #482 with `head_sha` `a1b2c3d4e5f6`, a focus item on `src/config.ts` with a line inside its seeded hunk, `PrBrief.parse` before insert, `onConflictDoNothing`), `e2e/specs/08-pr-brief.flow.json` (open #482 → Overview shows "Review focus" → click focus item → `wait --url tab=diff` + `file=src` → `wait --text src/config.ts`)
   - Skills: `drizzle-orm-patterns`, `zod`
