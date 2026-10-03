@@ -35,6 +35,17 @@ export function OnboardingTourView() {
   const generate = useGenerateOnboardingTour(repoId);
   const resync = useResyncRepoIntel(repoId);
   const [inProgress, setInProgress] = React.useState(false);
+  const baseline = React.useRef<string | undefined>(undefined);
+  // D13: while another generation runs, poll until a new tour appears, then clear the banner
+  React.useEffect(() => {
+    if (!inProgress) return;
+    if (tour && tour.generated_at !== baseline.current) {
+      setInProgress(false);
+      return;
+    }
+    const id = setInterval(() => refetch(), IN_PROGRESS_REFETCH_MS);
+    return () => clearInterval(id);
+  }, [inProgress, tour, refetch]);
   const copier = useCopy();
   // AC-51: collapse state is per tour load; a new generated_at starts all-expanded (not persisted)
   const [collapsed, setCollapsed] = React.useState<{
@@ -62,8 +73,8 @@ export function OnboardingTourView() {
       onSuccess: () => setInProgress(false),
       onError: (e) => {
         if (e instanceof ApiError && e.code === "generation_in_progress") {
+          baseline.current = tour?.generated_at;
           setInProgress(true);
-          setTimeout(() => refetch(), IN_PROGRESS_REFETCH_MS); // D13: one refetch
         }
       },
     });

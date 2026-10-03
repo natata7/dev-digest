@@ -308,6 +308,43 @@ describe("OnboardingTourView", () => {
     expect(screen.getByRole("button", { name: "Regenerate" })).toBeDisabled();
   });
 
+  it("AC-32 / E15: a second Regenerate activation while the first POST is pending sends no second request", async () => {
+    let release!: (r: Resp) => void;
+    postTour = () => new Promise<Resp>((res) => (release = res));
+    renderView();
+    const btn = await screen.findByRole("button", { name: "Regenerate" });
+    fireEvent.click(btn);
+    await screen.findByText("Generating onboarding tour…");
+    fireEvent.click(btn);
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+    expect(calls("POST", `/repos/${REPO_ID}/onboarding`)).toHaveLength(1);
+    release(ok(tour()));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Regenerate" })).toBeEnabled());
+    expect(calls("POST", `/repos/${REPO_ID}/onboarding`)).toHaveLength(1);
+  });
+
+  it("AC-32: after 409 generation_in_progress, once the tour is available the 'already being generated' banner is cleared", async () => {
+    getTour = () => noTour;
+    postTour = () => ({ status: 409, body: { error: { code: "generation_in_progress", message: "busy" } } });
+    renderView();
+    fireEvent.click(await screen.findByRole("button", { name: "Generate onboarding tour" }));
+    expect(await screen.findByText("A tour is already being generated")).toBeInTheDocument();
+    getTour = () => ok(tour()); // the other generation finished
+    await screen.findByRole("heading", { level: 2, name: NAMES[0] }, { timeout: 6000 });
+    await waitFor(() => expect(screen.queryByText("A tour is already being generated")).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Regenerate" })).toBeEnabled();
+  }, 10000);
+
+  it("AC-29: llm_invalid_output skeleton banner is a well-formed sentence, no raw reason code", async () => {
+    getTour = () => ok(tour({ status: "skeleton", reason: "llm_invalid_output", model: null, tokens_in: null, tokens_out: null, cost_usd: null }));
+    renderView();
+    const banner = await screen.findByText(
+      "This tour was built from repository facts only because the language model returned invalid output.",
+    );
+    expect(banner.closest('[role="status"]')).not.toBeNull();
+    expect(screen.queryByText(/llm_invalid_output/)).not.toBeInTheDocument();
+  });
+
   it("AC-33: GET 500 -> 'Couldn't load the onboarding tour' with a Retry that refetches", async () => {
     getTour = () => ({ status: 500, body: {} });
     renderView();
