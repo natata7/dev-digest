@@ -24,7 +24,7 @@ export function ReviewFocus({ prId, onOpenFile }: { prId: string | null; onOpenF
           {brief.review_focus.map((f, i) => (
             <li key={`${f.file}:${f.line}:${i}`} style={s.focusItem}>
               <Icon.ChevronRight size={10} />
-              <span>
+              <span style={s.focusText}>
                 <button
                   type="button"
                   style={s.link}

@@ -60,9 +60,9 @@ export const s = {
   } satisfies CSSProperties,
   riskHead: { display: "flex", alignItems: "flex-start", gap: 10 } satisfies CSSProperties,
   riskBody: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 } satisfies CSSProperties,
-  riskTitle: { display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: "var(--text-primary)" } satisfies CSSProperties,
+  riskTitle: { display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: "var(--text-primary)", overflowWrap: "anywhere" } satisfies CSSProperties,
   severityIcon: (color: string): CSSProperties => ({ color, display: "inline-flex", flexShrink: 0 }),
-  explanation: { margin: 0, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 } satisfies CSSProperties,
+  explanation: { margin: 0, overflowWrap: "anywhere", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 } satisfies CSSProperties,
   link: {
     background: "none",
     border: 0,
@@ -72,6 +72,10 @@ export const s = {
     fontSize: 12.5,
     color: "var(--accent-text, var(--accent))",
     textAlign: "left",
+    // long paths must wrap inside the row instead of overflowing the card
+    maxWidth: "100%",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   } satisfies CSSProperties,
   chevron: {
     background: "none",
@@ -85,6 +89,7 @@ export const s = {
     alignItems: "center",
   } satisfies CSSProperties,
   // review focus
+  focusText: { minWidth: 0, overflowWrap: "anywhere" } satisfies CSSProperties,
   focusItem: { display: "flex", alignItems: "baseline", gap: 8, fontSize: 13, color: "var(--text-secondary)" } satisfies CSSProperties,
   bullet: { fontSize: 8, color: "var(--accent-text, var(--accent))" } satisfies CSSProperties,
   count: {
