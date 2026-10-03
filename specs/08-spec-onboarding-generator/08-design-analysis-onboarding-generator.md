@@ -1,6 +1,6 @@
 # 08 Design analysis – Onboarding Generator
 
-Date: 2026-10-03 · Spec: [08-spec-onboarding-generator.md](./08-spec-onboarding-generator.md) · Questions: [round 2](./08-questions-2-onboarding-generator.md) · Status: analysis only — the spec is **not** changed yet
+Date: 2026-10-03 · Spec: [08-spec-onboarding-generator.md](./08-spec-onboarding-generator.md) · Questions: [round 2](./08-questions-2-onboarding-generator.md) · Status: round 2 answered by user 2026-10-03; spec updated to revision 2 (C3 kept as "Share link" copy-URL, C11 badge dropped, C15/C16 dropped, all other proposals adopted)
 
 The spec header says "Design analysis: none". That was wrong. Three mockups arrived after the feature was specified and built (commits `53151a6`, `79e48f2`):
 
