@@ -58,4 +58,37 @@ describe("VerdictBanner (smoke)", () => {
     );
     expect(screen.getByText("—")).toBeInTheDocument();
   });
+
+  it("verdict=null renders a neutral banner: summary only, no label/counts", () => {
+    renderWithIntl(
+      <VerdictBanner verdict={null} summary="Plain summary." score={null} findingsCount={0} blockers={0} />,
+    );
+    expect(screen.getByText("Plain summary.")).toBeInTheDocument();
+    expect(screen.queryByText(/findings/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Request changes")).not.toBeInTheDocument();
+    expect(screen.queryByText("PR score")).not.toBeInTheDocument();
+  });
+
+  it("renders optional actions and footer slots", () => {
+    renderWithIntl(
+      <VerdictBanner
+        verdict={null}
+        summary="s"
+        score={null}
+        findingsCount={0}
+        blockers={0}
+        actions={<button>act</button>}
+        footer={<span>foot</span>}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "act" })).toBeInTheDocument();
+    expect(screen.getByText("foot")).toBeInTheDocument();
+  });
+
+  it("omits actions/footer when not provided", () => {
+    renderWithIntl(
+      <VerdictBanner verdict="approve" summary="s" score={90} findingsCount={0} blockers={0} />,
+    );
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
 });

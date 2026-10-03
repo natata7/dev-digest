@@ -15,3 +15,11 @@ export const VERDICT_META: Record<
   approve: { c: "var(--ok)", bg: "var(--ok-bg)", icon: "CheckCircle", labelKey: "approve" },
   comment: { c: "var(--info)", bg: "var(--info-bg)", icon: "MessageSquare", labelKey: "comment" },
 };
+
+/** Banner without a verdict (e.g. brief before any completed review). */
+export const NEUTRAL_META: { c: string; bg: string; icon: IconName; labelKey: string } = {
+  c: "var(--text-secondary)",
+  bg: "var(--bg-hover)",
+  icon: "Info",
+  labelKey: "comment",
+};

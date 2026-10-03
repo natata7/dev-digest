@@ -217,7 +217,7 @@ export async function seed(db: Db): Promise<{ workspaceId: string; userId: strin
     .update(t.prFiles)
     .set({
       patch: [
-        '@@ -9,3 +9,7 @@ export const config = {',
+        '@@ -10,3 +10,7 @@ export const config = {',
         '   port: 3000,',
         '   env: process.env.NODE_ENV,',
         "+  stripeKey: 'sk_live_REDACTED_DEMO',",

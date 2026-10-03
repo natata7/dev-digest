@@ -3,13 +3,15 @@ import type { CSSProperties } from "react";
 export const s = {
   card: {
     border: "1px solid var(--border)",
-    borderRadius: 8,
+    borderRadius: 10,
     background: "var(--bg-elevated)",
     padding: 18,
     display: "flex",
     flexDirection: "column",
     gap: 14,
   } satisfies CSSProperties,
+  empty_wrap: { display: "flex", flexDirection: "column", gap: 14 } satisfies CSSProperties,
+  divider: { height: 1, background: "var(--border)" } satisfies CSSProperties,
   header: {
     display: "flex",
     alignItems: "flex-start",

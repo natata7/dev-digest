@@ -48,15 +48,13 @@ afterEach(cleanup);
 
 function renderCard(props: Partial<React.ComponentProps<typeof PrBriefCard>> = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  const onOpenFile = vi.fn();
   render(
     <QueryClientProvider client={qc}>
       <NextIntlClientProvider locale="en" messages={{ brief: briefMessages, prReview: prReviewMessages }}>
-        <PrBriefCard prId="pr-1" headSha="sha-1" filesCount={3} onOpenFile={onOpenFile} {...props} />
+        <PrBriefCard prId="pr-1" headSha="sha-1" filesCount={3} {...props} />
       </NextIntlClientProvider>
     </QueryClientProvider>,
   );
-  return { onOpenFile };
 }
 
 const postCalls = () => post.mock.calls.length;
@@ -68,15 +66,16 @@ describe("PrBriefCard", () => {
     expect(postCalls()).toBe(0);
   });
 
-  it("Generate → renders summary, Risk areas (severity sorted) and Review focus", async () => {
-    post.mockResolvedValue(BRIEF);
+  it("Generate → renders the summary banner (risks/focus live in their own components)", async () => {
+    // the server stores the brief, so the refetch triggered by newly mounted observers returns it
+    post.mockImplementation(async () => (stored = BRIEF));
     renderCard();
     fireEvent.click(await screen.findByRole("button", { name: "Generate brief" }));
     expect(await screen.findByText("Adds rate limiting.")).toBeInTheDocument();
-    expect(screen.getByText("Risk areas")).toBeInTheDocument();
-    expect(screen.getByText(/Review focus/)).toBeInTheDocument();
-    const titles = screen.getAllByText(/ thing$/).map((e) => e.textContent);
-    expect(titles).toEqual(["High thing", "Med thing", "Low thing"]);
+    expect(screen.queryByText("Risk areas")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Review focus/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh brief" })).toBeInTheDocument();
+    expect(screen.getByText("openrouter · m/x · 1K→200 tokens · $0.01 · 1 attempt")).toBeInTheDocument();
     expect(postCalls()).toBe(1);
   });
 
@@ -85,13 +84,6 @@ describe("PrBriefCard", () => {
     renderCard();
     expect(await screen.findByText("Adds rate limiting.")).toBeInTheDocument();
     expect(screen.getByText("Generated without: intent, blast radius")).toBeInTheDocument();
-  });
-
-  it("shows empty states for no risks / no focus", async () => {
-    stored = { ...BRIEF, risks: { risks: [] }, review_focus: [] };
-    renderCard();
-    expect(await screen.findByText("No notable risks flagged.")).toBeInTheDocument();
-    expect(screen.getByText("No specific places to start were flagged.")).toBeInTheDocument();
   });
 
   it("stale brief shows a banner and never auto-POSTs", async () => {
@@ -154,24 +146,6 @@ describe("PrBriefCard", () => {
     expect(await screen.findByRole("button", { name: "Refresh brief" })).toBeDisabled();
   });
 
-  it("focus item click → onOpenFile(path, line); risk file click → onOpenFile(path)", async () => {
-    stored = BRIEF;
-    const { onOpenFile } = renderCard();
-    fireEvent.click(await screen.findByRole("button", { name: "Open src/config.ts line 12 in Files changed" }));
-    expect(onOpenFile).toHaveBeenLastCalledWith("src/config.ts", 12);
-    fireEvent.click(screen.getByRole("button", { name: "Open src/h.ts in Files changed" }));
-    expect(onOpenFile).toHaveBeenLastCalledWith("src/h.ts");
-  });
-
-  it("risk explanation toggles", async () => {
-    stored = BRIEF;
-    renderCard();
-    await screen.findByText("High thing");
-    expect(screen.queryByText("high expl")).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: "Show explanation" })[0]!);
-    expect(screen.getByText("high expl")).toBeInTheDocument();
-  });
-
   it("shows VerdictBanner (with the brief summary) when a review with a verdict exists", async () => {
     stored = BRIEF;
     reviews = [{
@@ -194,17 +168,19 @@ describe("PrBriefCard", () => {
     expect(screen.queryByText("Request changes")).not.toBeInTheDocument();
   });
 
-  it("renders model text as plain text (no HTML / markdown interpretation)", async () => {
+  it("renders the summary as plain text (no HTML / markdown interpretation)", async () => {
     const evil = '<img src=x onerror="alert(1)"> **bold**';
-    stored = {
-      ...BRIEF,
-      summary: evil,
-      risks: { risks: [{ kind: "k", title: evil, explanation: evil, severity: "high", file_refs: [] }] },
-      review_focus: [{ file: "a.ts", line: 1, reason: evil }],
-    };
+    stored = { ...BRIEF, summary: evil };
     renderCard();
-    expect((await screen.findAllByText(evil, { exact: false })).length).toBeGreaterThan(0);
+    expect(await screen.findByText(evil)).toBeInTheDocument();
     expect(document.querySelector("img")).toBeNull();
     expect(document.querySelector("strong")).toBeNull();
+  });
+
+  it("verdict-less banner is neutral: summary shown, no verdict label or counts", async () => {
+    stored = BRIEF;
+    renderCard();
+    await screen.findByText("Adds rate limiting.");
+    expect(screen.queryByText(/findings ·/)).not.toBeInTheDocument();
   });
 });

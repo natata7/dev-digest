@@ -22,7 +22,9 @@
   "refresh": "Refresh brief",
   "retry": "Retry",
   "noFiles": "This PR has no changed files — nothing to brief.",
-  "emptyHint": "Summarise this PR, its risk areas and where to start reading. Uses one model call.",
+  "emptyTitle": "No brief yet",
+  "emptyHint": "Generate a Why+Risk brief for this PR.",
+  "callersEndpoints": "{callers} callers · {endpoints} endpoints",
   "error": "Could not generate the brief: {message}",
   "missingInputs": "Generated without: {inputs}",
   "input": {

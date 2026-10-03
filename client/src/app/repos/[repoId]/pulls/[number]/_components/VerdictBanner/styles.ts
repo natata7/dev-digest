@@ -6,6 +6,7 @@ export const s = {
     display: "flex",
     gap: 18,
     alignItems: "flex-start",
+    flexWrap: "wrap",
     padding: 18,
     borderRadius: 10,
     border: "1px solid var(--border)",
@@ -34,6 +35,14 @@ export const s = {
     lineHeight: 1.55,
     color: "var(--text-secondary)",
     marginTop: 8,
+  } satisfies CSSProperties,
+  actions: { flexShrink: 0 } satisfies CSSProperties,
+  footer: {
+    flexBasis: "100%",
+    display: "flex",
+    justifyContent: "flex-end",
+    fontSize: 12,
+    color: "var(--text-muted)",
   } satisfies CSSProperties,
   scoreCol: {
     display: "flex",

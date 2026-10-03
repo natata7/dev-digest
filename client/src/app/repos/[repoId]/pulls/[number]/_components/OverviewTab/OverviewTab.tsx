@@ -5,7 +5,8 @@ import { SectionLabel } from "@devdigest/ui";
 import type { RepoProvider } from "@devdigest/shared";
 import { IntentCard } from "../IntentCard";
 import { BlastRadiusCard } from "../BlastRadiusCard";
-import { PrBriefCard } from "../PrBriefCard";
+import { PrBriefCard, RiskAreas, ReviewFocus } from "../PrBriefCard";
+import { usePrBrief } from "@/lib/hooks/brief";
 import { s } from "./styles";
 
 interface OverviewTabProps {
@@ -22,21 +23,29 @@ interface OverviewTabProps {
 }
 
 export function OverviewTab({ prBody, prId, headSha, repoId, provider, repoFullName, onOpenFile, filesCount }: OverviewTabProps) {
+  const { data: brief } = usePrBrief(prId);
   return (
     <>
-      <PrBriefCard prId={prId} headSha={headSha} filesCount={filesCount} onOpenFile={onOpenFile} />
+      <PrBriefCard prId={prId} headSha={headSha} filesCount={filesCount} />
 
-      <div style={s.grid}>
-        <IntentCard prId={prId} headSha={headSha} />
+      {brief && (
+        <>
+          <div style={s.grid}>
+            <IntentCard prId={prId} headSha={headSha}>
+              <RiskAreas prId={prId} onOpenFile={onOpenFile} />
+            </IntentCard>
 
-        <BlastRadiusCard
-          prId={prId}
-          repoId={repoId}
-          provider={provider}
-          repoFullName={repoFullName}
-          headSha={headSha}
-        />
-      </div>
+            <BlastRadiusCard
+              prId={prId}
+              repoId={repoId}
+              provider={provider}
+              repoFullName={repoFullName}
+              headSha={headSha}
+            />
+          </div>
+          <ReviewFocus prId={prId} onOpenFile={onOpenFile} />
+        </>
+      )}
 
       {prBody && (
         <section>

@@ -3,10 +3,11 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
-import { Icon, SectionLabel, Badge, Button, Skeleton } from "@devdigest/ui";
+import { Icon, Badge, Button, Skeleton } from "@devdigest/ui";
 import type { RepoProvider } from "@devdigest/shared";
 import { useBlastRadius } from "@/lib/hooks/blast";
 import { useRepoIntelStatus, useResyncRepoIntel } from "@/lib/hooks/repo-intel";
+import { CardHeader } from "../CardHeader";
 import { BlastGraph } from "./BlastGraph";
 import { BlastTree } from "./BlastTree";
 import { PriorPrs } from "./PriorPrs";
@@ -29,6 +30,7 @@ interface BlastRadiusCardProps {
  *  flow reuses the existing repo-intel hooks (no ad-hoc fetch here). */
 export function BlastRadiusCard({ prId, repoId, provider, repoFullName, headSha }: BlastRadiusCardProps) {
   const t = useTranslations("blast");
+  const tb = useTranslations("brief");
   const qc = useQueryClient();
   const { data: blast, isLoading, isError } = useBlastRadius(prId);
   const [view, setView] = React.useState<BlastView>("tree");
@@ -80,8 +82,8 @@ export function BlastRadiusCard({ prId, repoId, provider, repoFullName, headSha 
   if (isError) {
     return (
       <section>
-        <SectionLabel icon="Zap">{t("title")}</SectionLabel>
         <div style={s.card}>
+          <CardHeader icon="Boxes" plain>{t("title")}</CardHeader>
           <span style={s.error}>{t("error")}</span>
         </div>
       </section>
@@ -96,9 +98,15 @@ export function BlastRadiusCard({ prId, repoId, provider, repoFullName, headSha 
 
   return (
     <section>
-      <SectionLabel icon="Zap">{t("title")}</SectionLabel>
-
       <div style={s.card}>
+        <CardHeader
+          icon="Boxes"
+          plain
+          right={<span style={s.headerMeta}>{tb("callersEndpoints", { callers: counts.callers, endpoints: counts.endpoints })}</span>}
+        >
+          {t("title")}
+        </CardHeader>
+
         {blast.degraded && (
           <div style={s.banner}>
             <span style={s.bannerText}>
