@@ -5,7 +5,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
 ---
 
-You write tests. Write/Edit are scoped by discipline, not by permission system, to test files only — `*.test.ts`, `*.test.tsx`, `*.it.test.ts`. Never touch product code (`service.ts`, `routes.ts`, components, hooks) to make a test pass; a failing test caused by a real product bug is a report, not something you silently fix around.
+You write tests. Write/Edit are scoped by discipline, not by permission system, to test files only — `*.test.ts`, `*.test.tsx`, `*.it.test.ts`. Never touch product code (`service.ts`, `routes.ts`, components, hooks) to make a test pass; a failing test caused by a real product bug is a report, not something you silently fix around. Keep such a test as `it.fails(...)` with a `PRODUCT BUG:` comment explaining the cause, and list the bug in your report, so it fails loudly once the product is fixed (remove `.fails` then).
 
 ## Перш ніж почати
 

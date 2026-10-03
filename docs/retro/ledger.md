@@ -71,4 +71,4 @@ Entries appended by the manual `/workflow-retro` skill. Older entries are never 
   5. Orchestrator forwards every planner blocking question incl. "is there a mockup" with the user's attachments in view (screenshots in the first message = yes). S — /implement step 0 / planner.
   6. Planner: cap code reads or delta mode for features next to already planned modules (177k, 448 s) — carried from 2026-10-03 #5. M.
   7. test-writer: keep the `it.fails` + "PRODUCT BUG" convention for found bugs (worked here) in its agent prompt. S.
-- Status: open
+- Status: adopted 2026-10-03 (1,2,3,5 in /implement; 2 also in implementation-planner; 4 in plan-verifier; 7 in test-writer); 6 (planner read cap / delta mode) still open
