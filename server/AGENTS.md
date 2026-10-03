@@ -20,6 +20,7 @@ Fastify 5.2 · Drizzle ORM 0.38 (Postgres/pgvector) · Zod 3.24 (`fastify-type-p
 | `src/db` | Drizzle schema + migrations (`seed-blast.ts` seeds a demo repo-intel index for `acme/payments-api#482`) |
 | `src/modules/repo-intel` | codebase indexer (powers the *Indexed* badge) |
 | `src/modules/blast` | `GET /pulls/:id/blast` — `BlastRadius` read straight from the repo-intel index (no LLM, no reindex); `GET /pulls/:id/history` — prior PRs/MRs touching the same files, via `CodeHostClient.listPriorPullRequests` |
+| `src/modules/brief` | `GET`/`POST /pulls/:id/brief` — PR Brief (summary, risks, review focus): one `completeStructured` call over diff + intent + blast + agent spec docs, paths grounded against the diff/blast allowlist, stored per PR (`head_sha`); `GET` never calls the LLM |
 | `src/platform` | server bootstrap / infra config |
 | `src/prompts` | agent system prompts |
 | `src/vendor` | synced shared code — see Do-not-touch |
