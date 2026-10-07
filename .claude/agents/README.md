@@ -6,9 +6,10 @@
 
 | Агент | Модель | Дозволи (tools) | Вхід | Вихід |
 |---|---|---|---|---|
+| [spec-creator](spec-creator.md) | opus | `Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion, Agent(researcher)` + Figma read tools (Write/Edit обмежені hook-ом `.claude/hooks/spec-creator-guard.sh` лише на `*.md` у `docs/specs/**` і `specs/**`) | Ідея + джерела дизайну (опис, Figma, макети, код) | `NN-spec-*.md`, `NN-questions-N-*.md`, `NN-design-analysis-*.md` |
+| [implementer](implementer.md) | sonnet | `Read, Write, Edit, Grep, Glob, Bash` + Figma read tools | Крок(и) плану одного пакета або список знахідок рев'ю | Короткий звіт: Done / Files / Verification |
 | [researcher](researcher.md) | sonnet | `Read, Bash, Grep, Glob, WebFetch, WebSearch` (без Write/Edit) | Питання дослідження (репозиторій і/або зовнішні джерела) | Звіт: Висновок / Докази / Посилання / Не вдалося з'ясувати |
-| [planner](planner.md) | opus | `Read, Grep, Glob, Bash` (read-only; Bash лише для `git log`/`pnpm ls`/`find` тощо, без мутуючих команд, без Write/Edit) | Опис фічі/зміни | Development Plan (структурований Markdown) |
-| [implementer](implementer.md) | sonnet | `Read, Write, Edit, Grep, Glob, Bash, WebFetch, WebSearch` | Development Plan від `planner` | Implementation Report (структурований Markdown) |
+| [implementation-planner](implementation-planner.md) | opus | `Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion` (Write/Edit обмежені hook-ом `plan-guard.sh` лише на `NN-plan-*.md` у папці спеки; Bash лише для читання) | Спека/вимоги (від `spec-creator`) | Implementation Plan (структурований Markdown) |
 | [test-writer](test-writer.md) | sonnet | `Read, Write, Edit, Grep, Glob, Bash` (Write/Edit дисципліновані лише на тестові файли) | Development Plan/вимоги або наявний код | Звіт: написані тести, прогін, поза межами |
 | [architecture-reviewer](architecture-reviewer.md) | sonnet | `Read, Grep, Glob, Bash, ReportFindings` (без Write/Edit) | Diff або набір файлів | Виклик `ReportFindings` (структуровані знахідки з file:line) |
 | [plan-verifier](plan-verifier.md) | sonnet | `Read, Grep, Glob, Bash` (Bash лише для наявних verify-команд пакету, без Write/Edit) | Development Plan/вимоги + реалізований код | Coverage Matrix у форматі `docs/specs/NN-validation-*.md` |
@@ -16,9 +17,9 @@
 
 ## Відповідальність
 
+- **spec-creator** — пише feature-специфікації англійською в EARS (AC-N, edge cases, NFR, `[NEEDS CLARIFICATION]`) без деталей імплементації; аналізує дизайни (прогалини, edge cases, взаємодія модулів у mermaid, UX-пропозиції). Може паралельно запускати `researcher`, читає лише релевантні `INSIGHTS.md`, має Traceability, verification hints і фінальний self-check. Спершу блокуючі питання, решта inline; чернетку пише завжди. Однo-модульні спеки → `docs/specs/`, багатомодульні → top-level `specs/`.
 - **researcher** — дослідницький агент без побічних ефектів. Не використовує `/deep-research`; якщо задача нечітка — спершу ставить уточнювальні запитання. Два режими: пошук у коді репозиторію та пошук у зовнішніх джерелах, кожен зі своїм форматом звіту.
-- **planner** — готує Development Plan: визначає зачеплені пакети (`server`/`client`/`reviewer-core`/`e2e`), архітектурні обмеження, читає `INSIGHTS.md` зачеплених модулів і явно фіксує, які скіли `implementer` має застосувати на кожному кроці. Ніколи не пише код.
-- **implementer** — виконує готовий Development Plan у frontend і backend, завантажує скіли зі списку плану (відхилення від списку позначає у звіті, не мовчить), запускає verify-команди зачеплених пакетів, перевіряє лише власну відповідність плану. Архітектурне й безпекове рев'ю — поза межами цього агента, виконують окремі агенти.
+- **implementation-planner** — за готовою специфікацією створює Implementation Plan: перевіряє вимоги проти коду, ставить уточнювальні питання (`AskUserQuestion`), дає рекомендації як зробити краще, фіксує скіли по кроках і питає користувача, чи йти multi-agent, чи single-agent проходом. Не пише спек і код, нічого не виконує.
 - **test-writer** — пише тести для UI і backend за проєктними скілами (`react-testing-library`, `fastify-best-practices/testing`, `onion-architecture/testing-strategy`); Write/Edit дисципліновані лише на тестові файли, ніколи не чіпає продукт-код, щоб зробити тест зеленим.
 - **architecture-reviewer** — read-only, перевіряє межі шарів (onion-architecture для backend, ui-architecture для frontend) на diff і повертає знахідки через `ReportFindings` з доказом `file:line`. Не фіксує, лише звітує.
 - **plan-verifier** — звіряє реалізований код з кожним пунктом плану/вимог у форматі Coverage Matrix (Verified/Not Verified + доказ), сумісному з наявною конвенцією `docs/specs/NN-validation-*.md`; не підміняє перевірку наративною порадою.
@@ -27,12 +28,12 @@
 ## Потік
 
 ```
-planner → implementer → { test-writer, architecture-reviewer, plan-verifier } → doc-writer
+spec-creator → implementation-planner → `/implement <plan>` (implementer-и → architecture-reviewer + fix-loop ≤2 → plan-verifier; test-writer поки вимкнено) — раніше: (виконання плану: multi-agent або single-agent) → { test-writer, architecture-reviewer, plan-verifier } → doc-writer
 ```
 
-`planner` не мутує стан і не виконує роботу сам — оркеструючий Claude передає його Development Plan як контекст наступному виклику `implementer`. Список скілів у плані — контракт: `implementer` не розширює й не ігнорує його мовчки. `architecture-reviewer` і `plan-verifier` не залежать одне від одного — обидва читають вихід `implementer`/`test-writer` з різним фокусом (межі шарів vs трасування вимог) і можуть йти паралельно. `doc-writer` йде останнім, документуючи підтверджену реалізацію.
+`implementation-planner` не виконує роботу сам — оркеструючий Claude передає його Implementation Plan як контекст наступному виклику виконавець плану. Список скілів у плані — контракт: виконавець плану не розширює й не ігнорує його мовчки. `architecture-reviewer` і `plan-verifier` не залежать одне від одного — обидва читають вихід виконавець плану/`test-writer` з різним фокусом (межі шарів vs трасування вимог) і можуть йти паралельно. `doc-writer` йде останнім, документуючи підтверджену реалізацію.
 
-## Джерела правил (planner, implementer, test-writer, architecture-reviewer, plan-verifier, doc-writer)
+## Джерела правил (implementation-planner, test-writer, architecture-reviewer, plan-verifier, doc-writer)
 
 Правила агентів спираються на вже наявні в репозиторії конвенції, а не на нові вигадані патерни:
 

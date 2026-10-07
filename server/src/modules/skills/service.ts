@@ -162,6 +162,13 @@ export class SkillsService {
     return toSkillDto(row, 0);
   }
 
+  async setContext(workspaceId: string, id: string, paths: string[]): Promise<Skill | undefined> {
+    const row = await this.repo.setContextPaths(workspaceId, id, paths);
+    if (!row) return undefined;
+    const [dto] = await this.toDtos([row]);
+    return dto;
+  }
+
   async update(
     workspaceId: string,
     id: string,

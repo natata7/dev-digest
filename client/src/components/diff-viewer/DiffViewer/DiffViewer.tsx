@@ -17,6 +17,7 @@ export function DiffViewer({
   commenting,
   findings,
   defaultOpen,
+  focus,
 }: {
   files: PrFile[];
   commenting?: DiffCommentApi;
@@ -24,6 +25,8 @@ export function DiffViewer({
   /** Overrides each file's own "open if small enough" default (used by
    *  DiffTab's grouped view, e.g. to start docs/boilerplate groups collapsed). */
   defaultOpen?: boolean;
+  /** Deep link target: that file opens (overriding defaultOpen) and scrolls into view. */
+  focus?: { path: string; line?: number };
 }) {
   const t = useTranslations("shell");
   if (!files || files.length === 0) {
@@ -32,7 +35,7 @@ export function DiffViewer({
   return (
     <div style={s.list}>
       {files.map((f) => (
-        <FileCard key={f.path} file={f} commenting={commenting} findings={findings} defaultOpen={defaultOpen} />
+        <FileCard key={f.path} file={f} commenting={commenting} findings={findings} defaultOpen={defaultOpen} focus={focus} />
       ))}
     </div>
   );

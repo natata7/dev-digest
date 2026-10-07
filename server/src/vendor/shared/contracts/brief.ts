@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 /**
  * PR Brief building blocks: Intent, Blast radius, Risks, PR History,
- * Smart Diff. Composed into PrBrief.
+ * Smart Diff, Review focus. Composed into PrBrief (the persisted, LLM-written
+ * brief: summary + risks + review focus; intent/blast are nullable inputs,
+ * history optional). PrBriefDraft is what the model returns.
  */
 
 // ---- Intent ----
@@ -157,11 +159,47 @@ export const SmartDiff = z.object({
 });
 export type SmartDiff = z.infer<typeof SmartDiff>;
 
+// ---- Review focus ----
+export const ReviewFocusItem = z.object({
+  file: z.string(),
+  line: z.number().int(),
+  reason: z.string(),
+});
+export type ReviewFocusItem = z.infer<typeof ReviewFocusItem>;
+
 // ---- Composed PR Brief (pr_brief.json) ----
+/** What the MODEL returns. All fields required (strict json_schema mode). */
+export const PrBriefDraft = z.object({
+  summary: z.string(),
+  risks: z.array(Risk),
+  review_focus: z.array(ReviewFocusItem),
+});
+export type PrBriefDraft = z.infer<typeof PrBriefDraft>;
+
+export const PrBriefMissingInput = z.enum(['intent', 'blast', 'specs', 'description']);
+export type PrBriefMissingInput = z.infer<typeof PrBriefMissingInput>;
+
+export const PrBriefGeneration = z.object({
+  provider: z.string(),
+  model: z.string(),
+  tokens_in: z.number().int(),
+  tokens_out: z.number().int(),
+  cost_usd: z.number().nullable(),
+  attempts: z.number().int(),
+});
+export type PrBriefGeneration = z.infer<typeof PrBriefGeneration>;
+
 export const PrBrief = z.object({
-  intent: Intent,
-  blast: BlastRadius,
+  summary: z.string(),
+  intent: Intent.nullable(),
+  blast: BlastRadius.nullable(),
   risks: Risks,
-  history: PrHistory,
+  review_focus: z.array(ReviewFocusItem),
+  history: PrHistory.optional(),
+  head_sha: z.string(),
+  /** ISO timestamp. */
+  generated_at: z.string(),
+  missing_inputs: z.array(PrBriefMissingInput),
+  generation: PrBriefGeneration,
 });
 export type PrBrief = z.infer<typeof PrBrief>;

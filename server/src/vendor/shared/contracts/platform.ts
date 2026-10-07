@@ -263,11 +263,29 @@ export type PrCommentInput = z.infer<typeof PrCommentInput>;
 // ---- Project Context ----
 export const SpecFile = z.object({
   path: z.string(),
-  content: z.string().nullish(),
-  size: z.number().int().nullish(),
-  updated_at: z.string().nullish(),
+  kind: z.enum(['specs', 'docs', 'insights']),
+  size: z.number().int(),
+  tokens: z.number().int(),
+  used_by_agents: z.number().int(),
 });
 export type SpecFile = z.infer<typeof SpecFile>;
+
+export const ContextList = z.object({
+  files: z.array(SpecFile),
+  total_tokens: z.number().int(),
+});
+export type ContextList = z.infer<typeof ContextList>;
+
+export const ContextFile = z.object({
+  path: z.string(),
+  content: z.string(),
+  tokens: z.number().int(),
+});
+export type ContextFile = z.infer<typeof ContextFile>;
+
+// PUT body for /agents/:id/context and /skills/:id/context
+export const ContextPaths = z.object({ paths: z.array(z.string()) });
+export type ContextPaths = z.infer<typeof ContextPaths>;
 
 export const IndexStatus = z.object({
   status: z.enum(['idle', 'cloning', 'parsing', 'embedding', 'done', 'error']),

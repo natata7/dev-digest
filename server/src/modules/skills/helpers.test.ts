@@ -37,6 +37,7 @@ describe('toSkillDto', () => {
         enabled: true,
         version: 2,
         evidenceFiles: null,
+        contextPaths: [],
         createdAt: new Date('2026-09-19T00:00:00Z'),
       },
       3,

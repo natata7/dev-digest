@@ -76,6 +76,7 @@
     "unsaved": "Unsaved",
     "tabs": {
       "config": "Config",
+      "context": "Context",
       "preview": "Preview",
       "versions": "Versions"
     }

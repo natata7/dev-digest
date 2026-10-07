@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Tabs } from "@devdigest/ui";
 import type { Skill } from "@devdigest/shared";
 import { ConfigTab } from "./_components/ConfigTab";
+import { ContextTab } from "./_components/ContextTab";
 import { PreviewTab } from "./_components/PreviewTab";
 import { VersionsTab } from "./_components/VersionsTab";
 import { TABS } from "./constants";
@@ -24,6 +25,8 @@ export function SkillEditor({ skill, tab, onTab }: { skill: Skill; tab: string; 
           <PreviewTab skill={skill} />
         ) : tab === "versions" ? (
           <VersionsTab skill={skill} />
+        ) : tab === "context" ? (
+          <ContextTab key={skill.id} skill={skill} />
         ) : (
           <ConfigTab key={skill.id} skill={skill} />
         )}

@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { SectionLabel, Badge, Button, Skeleton, EmptyState } from "@devdigest/ui";
+import { CardHeader } from "../CardHeader";
+import { Badge, Button, Skeleton, EmptyState } from "@devdigest/ui";
 import { usePrIntent, useRecomputeIntent } from "@/lib/hooks/reviews";
 import { CONFIDENCE_COLOR, SOURCE_LABEL, SOURCE_ICON } from "./constants";
 import { isIntentStale } from "./helpers";
@@ -10,12 +11,14 @@ import { s } from "./styles";
 interface IntentCardProps {
   prId: string | null;
   headSha: string | null | undefined;
+  /** Rendered inside the card under a divider (PR brief risk areas). */
+  children?: React.ReactNode;
 }
 
 /** Why this PR was opened, derived before review (Intent Layer). Colocated:
  *  the only consumer is OverviewTab. Data comes exclusively through the
  *  usePrIntent/useRecomputeIntent hooks — no ad-hoc fetch here. */
-export function IntentCard({ prId, headSha }: IntentCardProps) {
+export function IntentCard({ prId, headSha, children }: IntentCardProps) {
   const { data: intent, isLoading } = usePrIntent(prId);
   const recompute = useRecomputeIntent(prId);
 
@@ -25,8 +28,8 @@ export function IntentCard({ prId, headSha }: IntentCardProps) {
 
   if (!intent) {
     return (
-      <section>
-        <SectionLabel icon="Target">Intent</SectionLabel>
+      <section style={s.empty_wrap}>
+        <CardHeader icon="Target">Intent</CardHeader>
         <EmptyState
           icon="Target"
           title="Intent not yet derived"
@@ -35,6 +38,8 @@ export function IntentCard({ prId, headSha }: IntentCardProps) {
           onCta={() => recompute.mutate()}
           ctaLoading={recompute.isPending}
         />
+        {children && <div style={s.divider} />}
+        {children}
       </section>
     );
   }
@@ -43,18 +48,17 @@ export function IntentCard({ prId, headSha }: IntentCardProps) {
 
   return (
     <section>
-      <SectionLabel
-        icon="Target"
-        right={
-          <Badge color={CONFIDENCE_COLOR[intent.confidence]} bg="var(--bg-hover)">
-            {intent.confidence} confidence
-          </Badge>
-        }
-      >
-        Intent
-      </SectionLabel>
-
       <div style={s.card}>
+        <CardHeader
+          icon="Target"
+          right={
+            <Badge color={CONFIDENCE_COLOR[intent.confidence]} bg="var(--bg-hover)">
+              {intent.confidence} confidence
+            </Badge>
+          }
+        >
+          Intent
+        </CardHeader>
         {stale && (
           <div style={s.banner}>
             <span>PR updated since this intent was computed.</span>
@@ -133,6 +137,9 @@ export function IntentCard({ prId, headSha }: IntentCardProps) {
             </Button>
           </div>
         )}
+
+        {children && <div style={s.divider} />}
+        {children}
       </div>
     </section>
   );

@@ -40,6 +40,11 @@ Cross-cutting chrome lives in `src/components/app-shell` (nav, breadcrumbs,
 `g`-then-key shortcuts). Pages are thin; feature logic sits in colocated
 `_components/<Name>/` folders, each with its own `*.test.tsx`.
 
+### PR Brief & diff deep link
+
+- The Overview tab renders a **PR Brief card** (`_components/PrBriefCard`, hook `src/lib/hooks/brief.ts`): `GET /pulls/:id/brief` on load, `POST` to generate/regenerate.
+- Review-focus items link to `/pulls/:number?tab=diff&file=<path>&line=<n>`: the Files changed tab opens that file's card and highlights the line (`line` optional; non-numeric ignored).
+
 ## Testing
 
 Component/interaction tests (`*.test.tsx`) run under vitest + jsdom with `fetch`

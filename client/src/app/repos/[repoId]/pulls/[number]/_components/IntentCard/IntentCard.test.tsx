@@ -81,4 +81,26 @@ describe("IntentCard", () => {
     fireEvent.click(screen.getByText("Recompute"));
     expect(mutate).toHaveBeenCalledTimes(1);
   });
+
+  it("renders children inside the card (risk areas slot), for both filled and empty states", () => {
+    hookState.data = INTENT;
+    const { unmount } = render(
+      <IntentCard prId="pr-1" headSha="sha-1"><div>risk slot</div></IntentCard>,
+    );
+    const intent = screen.getByText(/Add rate limiting to the public API/);
+    expect(intent.closest("section")).toContainElement(screen.getByText("risk slot"));
+    unmount();
+
+    hookState.data = null;
+    render(<IntentCard prId="pr-1" headSha="sha-1"><div>risk slot</div></IntentCard>);
+    expect(screen.getByText("Intent not yet derived")).toBeInTheDocument();
+    expect(screen.getByText("risk slot")).toBeInTheDocument();
+  });
+
+  it("has an in-card Intent header with the confidence badge", () => {
+    hookState.data = INTENT;
+    render(<IntentCard prId="pr-1" headSha="sha-1" />);
+    expect(screen.getByText("Intent")).toBeInTheDocument();
+    expect(screen.getByText(/high confidence/)).toBeInTheDocument();
+  });
 });

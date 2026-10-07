@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { BlastRadius } from "@devdigest/shared";
 import type { RepoIntelState } from "@/lib/hooks/repo-intel";
 import messages from "../../../../../../../../messages/en/blast.json";
+import briefMessages from "../../../../../../../../messages/en/brief.json";
 import { BlastRadiusCard } from "./BlastRadiusCard";
 
 const REPO_ID = "repo-1";
@@ -134,7 +135,7 @@ function renderCard(overrides: Partial<React.ComponentProps<typeof BlastRadiusCa
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <NextIntlClientProvider locale="en" messages={{ blast: messages }}>
+      <NextIntlClientProvider locale="en" messages={{ blast: messages, brief: briefMessages }}>
         <BlastRadiusCard
           prId={PR_ID}
           repoId={REPO_ID}
@@ -154,6 +155,13 @@ afterEach(() => {
 });
 
 describe("BlastRadiusCard", () => {
+  it("shows the in-card header with 'N callers · M endpoints'", async () => {
+    stubFetch(BLAST);
+    renderCard();
+    expect(await screen.findByText("Blast radius")).toBeInTheDocument();
+    expect(screen.getByText("7 callers · 3 endpoints")).toBeInTheDocument();
+  });
+
   it("renders summary counts for symbols, callers, endpoints, and crons", async () => {
     stubFetch(BLAST);
     renderCard();

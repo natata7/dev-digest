@@ -62,3 +62,10 @@ export function repoBlobUrl(
   }
   return url;
 }
+
+/** Last path segment of `owner/name` (or nested GitLab groups). */
+export function repoDisplayName(fullName: string | undefined, fallback: string): string {
+  if (!fullName) return fallback;
+  const parts = fullName.split("/").filter(Boolean);
+  return parts[parts.length - 1] ?? fallback;
+}

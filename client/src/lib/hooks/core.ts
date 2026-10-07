@@ -15,8 +15,8 @@ import type {
   Repo,
   PrMeta,
   PrDetail,
-  SpecFile,
-  IndexStatus,
+  ContextList,
+  ContextFile,
 } from "../types";
 
 // ---- Settings (F1: GET/PUT /settings, POST /settings/test-connection) ----
@@ -119,19 +119,20 @@ export function usePullDetail(prId: string | number | null | undefined) {
   });
 }
 
-// ---- Project Context (A3 contract; safe to call once API exposes it) ----
+// ---- Project Context (read-only discovery; PUT /agents|skills/:id/context lives in agents.ts/skills.ts) ----
 export function useContextFiles(repoId: string | null | undefined) {
   return useQuery({
     queryKey: ["context", repoId],
-    queryFn: () => api.get<SpecFile[]>(`/repos/${repoId}/context`),
+    queryFn: () => api.get<ContextList>(`/repos/${repoId}/context`),
     enabled: !!repoId,
   });
 }
 
-export function useReindexContext() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (repoId: string) => api.post<IndexStatus>(`/repos/${repoId}/context/reindex`),
-    onSuccess: (_d, repoId) => qc.invalidateQueries({ queryKey: ["context", repoId] }),
+export function useContextFile(repoId: string | null | undefined, path: string | null | undefined) {
+  return useQuery({
+    queryKey: ["context-file", repoId, path],
+    queryFn: () =>
+      api.get<ContextFile>(`/repos/${repoId}/context/file?path=${encodeURIComponent(path ?? "")}`),
+    enabled: !!repoId && !!path,
   });
 }

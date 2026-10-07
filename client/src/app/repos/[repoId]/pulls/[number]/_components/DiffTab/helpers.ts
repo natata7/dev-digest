@@ -30,6 +30,11 @@ export function groupFiles(smartDiff: SmartDiff | undefined, files: PrFile[]): F
   });
 }
 
+/** Role group holding `path`, or null when it is in none (E9 / not in diff). */
+export function roleOfPath(groups: FileGroup[], path: string): SmartDiffRole | null {
+  return groups.find((g) => g.files.some((f) => f.path === path))?.role ?? null;
+}
+
 /** Count of files (not findings) in `files` that have ≥1 finding — AC3. */
 export function filesWithFindingsCount(files: PrFile[], findings: FindingRecord[]): number {
   const pathsWithFindings = new Set(findings.map((f) => f.file));

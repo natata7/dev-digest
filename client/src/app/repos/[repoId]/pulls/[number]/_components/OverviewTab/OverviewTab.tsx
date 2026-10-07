@@ -5,6 +5,8 @@ import { SectionLabel } from "@devdigest/ui";
 import type { RepoProvider } from "@devdigest/shared";
 import { IntentCard } from "../IntentCard";
 import { BlastRadiusCard } from "../BlastRadiusCard";
+import { PrBriefCard, RiskAreas, ReviewFocus } from "../PrBriefCard";
+import { usePrBrief } from "@/lib/hooks/brief";
 import { s } from "./styles";
 
 interface OverviewTabProps {
@@ -14,20 +16,36 @@ interface OverviewTabProps {
   repoId: string | null | undefined;
   provider: RepoProvider;
   repoFullName: string | null;
+  /** Wired by the PR page: opens Files changed on a file (and line). */
+  onOpenFile?: (path: string, line?: number) => void;
+  /** Number of changed files; 0 disables Generate (AC-33). */
+  filesCount?: number;
 }
 
-export function OverviewTab({ prBody, prId, headSha, repoId, provider, repoFullName }: OverviewTabProps) {
+export function OverviewTab({ prBody, prId, headSha, repoId, provider, repoFullName, onOpenFile, filesCount }: OverviewTabProps) {
+  const { data: brief } = usePrBrief(prId);
   return (
     <>
-      <IntentCard prId={prId} headSha={headSha} />
+      <PrBriefCard prId={prId} headSha={headSha} filesCount={filesCount} />
 
-      <BlastRadiusCard
-        prId={prId}
-        repoId={repoId}
-        provider={provider}
-        repoFullName={repoFullName}
-        headSha={headSha}
-      />
+      {brief && (
+        <>
+          <div style={s.grid}>
+            <IntentCard prId={prId} headSha={headSha}>
+              <RiskAreas prId={prId} onOpenFile={onOpenFile} />
+            </IntentCard>
+
+            <BlastRadiusCard
+              prId={prId}
+              repoId={repoId}
+              provider={provider}
+              repoFullName={repoFullName}
+              headSha={headSha}
+            />
+          </div>
+          <ReviewFocus prId={prId} onOpenFile={onOpenFile} />
+        </>
+      )}
 
       {prBody && (
         <section>

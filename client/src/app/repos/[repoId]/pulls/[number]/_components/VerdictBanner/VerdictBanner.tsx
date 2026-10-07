@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { Icon, Badge, CircularScore } from "@devdigest/ui";
 import { RunCostBadge } from "@/components/run-cost-badge";
 import type { Verdict } from "@devdigest/shared";
-import { VERDICT_META } from "./constants";
+import { VERDICT_META, NEUTRAL_META } from "./constants";
 import { s } from "./styles";
 
 export function VerdictBanner({
@@ -18,8 +18,11 @@ export function VerdictBanner({
   blockers,
   agentName,
   run,
+  actions,
+  footer,
 }: {
-  verdict: Verdict;
+  /** null → neutral banner (no verdict yet): info icon, no title/counts. */
+  verdict: Verdict | null;
   summary: string | null;
   score: number | null;
   findingsCount: number;
@@ -27,10 +30,14 @@ export function VerdictBanner({
   agentName?: string | null;
   /** Cost/token usage of the run that produced this review (Run Cost Badge).
       Omit to hide the line; null shows "—" (run known, data missing). */
+  /** Optional slot rendered top-right, before the score (e.g. refresh button). */
+  actions?: React.ReactNode;
+  /** Optional full-width row under the banner content, right-aligned. */
+  footer?: React.ReactNode;
   run?: { cost_usd: number | null; tokens_in: number | null; tokens_out: number | null } | null;
 }) {
   const t = useTranslations("prReview");
-  const m = VERDICT_META[verdict] ?? VERDICT_META.comment;
+  const m = verdict ? (VERDICT_META[verdict] ?? VERDICT_META.comment) : NEUTRAL_META;
   const VIcon = Icon[m.icon];
   return (
     <div style={s.wrap}>
@@ -38,18 +45,20 @@ export function VerdictBanner({
         <VIcon size={22} />
       </div>
       <div style={s.main}>
-        <div style={s.titleRow}>
-          <span style={s.label(m.c)}>{t(`verdict.${m.labelKey}`)}</span>
-          <Badge color="var(--text-secondary)">
-            {t("verdict.findingsCount", { count: findingsCount })}
-            {blockers > 0 ? t("verdict.blockers", { count: blockers }) : ""}
-          </Badge>
-          {agentName && (
-            <Badge color="var(--accent-text)" bg="var(--accent-bg)" icon="Cpu">
-              {agentName}
+        {verdict && (
+          <div style={s.titleRow}>
+            <span style={s.label(m.c)}>{t(`verdict.${m.labelKey}`)}</span>
+            <Badge color="var(--text-secondary)">
+              {t("verdict.findingsCount", { count: findingsCount })}
+              {blockers > 0 ? t("verdict.blockers", { count: blockers }) : ""}
             </Badge>
-          )}
-        </div>
+            {agentName && (
+              <Badge color="var(--accent-text)" bg="var(--accent-bg)" icon="Cpu">
+                {agentName}
+              </Badge>
+            )}
+          </div>
+        )}
         {summary && <p style={s.summary}>{summary}</p>}
         {run !== undefined && (
           <div style={{ marginTop: 6 }}>
@@ -62,12 +71,14 @@ export function VerdictBanner({
           </div>
         )}
       </div>
+      {actions && <div style={s.actions}>{actions}</div>}
       {score != null && (
         <div style={s.scoreCol}>
           <CircularScore score={score} size={52} stroke={5} />
           <span style={s.scoreLabel}>{t("verdict.prScore")}</span>
         </div>
       )}
+      {footer && <div style={s.footer}>{footer}</div>}
     </div>
   );
 }

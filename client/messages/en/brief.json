@@ -15,5 +15,39 @@
     "blame": "blame",
     "noHistory": "No history available for this line.",
     "noCommits": "No commits found for this line."
-  }
+  },
+  "title": "PR Brief",
+  "generate": "Generate brief",
+  "generating": "Generating brief…",
+  "refresh": "Refresh brief",
+  "retry": "Retry",
+  "noFiles": "This PR has no changed files — nothing to brief.",
+  "emptyTitle": "No brief yet",
+  "emptyHint": "Generate a Why+Risk brief for this PR.",
+  "callersEndpoints": "{callers} callers · {endpoints} endpoints",
+  "error": "Could not generate the brief: {message}",
+  "missingInputs": "Generated without: {inputs}",
+  "input": {
+    "intent": "intent",
+    "blast": "blast radius",
+    "specs": "specs",
+    "description": "description"
+  },
+  "stale": "PR updated since this brief was generated.",
+  "regenerate": "Regenerate",
+  "riskAreas": "Risk areas",
+  "noRiskAreas": "No notable risks flagged.",
+  "severity": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "showExplanation": "Show explanation",
+  "hideExplanation": "Hide explanation",
+  "reviewFocus": "Review focus — read these first",
+  "noFocus": "No specific places to start were flagged.",
+  "openFile": "Open {file} in Files changed",
+  "openFocus": "Open {file} line {line} in Files changed",
+  "generation": "{provider} · {model} · {tokensIn}→{tokensOut} tokens · {cost} · {attempts, plural, one {# attempt} other {# attempts}}",
+  "costUnknown": "cost unknown"
 }

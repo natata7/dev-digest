@@ -115,3 +115,16 @@ export function useConfirmSkillImport() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["skills"] }),
   });
 }
+
+/** Replace the skill's attached project-context paths (PUT body {paths}). */
+export function useSetSkillContext(skillId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (paths: string[]) => api.put<Skill>(`/skills/${skillId}/context`, { paths }),
+    onSuccess: (skill) => {
+      qc.setQueryData(["skill", skillId], skill);
+      qc.invalidateQueries({ queryKey: ["skills"] });
+      qc.invalidateQueries({ queryKey: ["context"] });
+    },
+  });
+}

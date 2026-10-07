@@ -77,6 +77,7 @@ flowchart TB
   end
   subgraph Intel["Repo intelligence"]
     repoIntel["repo-intel<br/>/repos/:id/index-state · /resync"]
+    brief["brief<br/>GET|POST /pulls/:id/brief"]
   end
   subgraph Platform["Platform"]
     settings["settings<br/>/settings · /providers"]
@@ -84,6 +85,27 @@ flowchart TB
   end
   HEALTH["/health (liveness) · /health/ready (DB ping → 200/503)"]
 ```
+
+### PR Brief (`modules/brief`)
+
+- `GET /pulls/:id/brief` — stored brief only (no LLM, no code host); `404 no_brief` if never generated.
+- `POST /pulls/:id/brief` — (re)generate: one LLM call (`risk_brief` feature model), result stored per PR; concurrent calls for a PR join the in-flight one.
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant B as BriefService
+  participant L as LLM (1 call)
+  C->>B: POST /pulls/:id/brief
+  B->>B: facts: diff + intent + blast + agent specs (token-budgeted)
+  B->>L: completeStructured(PrBriefDraft)
+  L-->>B: summary · risks · review_focus
+  B->>B: ground paths/lines against diff + blast allowlist
+  B->>B: upsert brief (head_sha)
+  B-->>C: PrBrief
+```
+
+Errors: `400 provider_not_configured`, `422 empty_diff`, `502 llm_invalid_output|llm_failed`.
 
 ## Environment
 

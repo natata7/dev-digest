@@ -8,7 +8,7 @@ import { SEV } from "@devdigest/ui";
 import { commentTargetFor, type CommentThread, type DiffCommentApi, cs } from "../comments";
 import { type DiffFindingApi, topSeverityFinding, rowSeverityLabel } from "../findings";
 import { type Line } from "../helpers";
-import { s, lineRowFor, lineSignFor, lineSeverityStripe, severityRowLabelFor } from "../styles";
+import { s, lineFocusedStyle, lineRowFor, lineSignFor, lineSeverityStripe, severityRowLabelFor } from "../styles";
 import { CommentThreadView } from "../CommentThreadView";
 import { InlineComposer } from "../InlineComposer";
 
@@ -19,6 +19,7 @@ export function CodeLine({
   commenting,
   findings,
   findingApi,
+  focused,
 }: {
   ln: Line;
   path: string;
@@ -26,6 +27,8 @@ export function CodeLine({
   commenting?: DiffCommentApi;
   findings?: FindingRecord[];
   findingApi?: DiffFindingApi;
+  /** Deep-link target line: highlighted + marked for FileCard to scroll to. */
+  focused?: boolean;
 }) {
   const [hover, setHover] = React.useState(false);
   const [composing, setComposing] = React.useState(false);
@@ -51,7 +54,10 @@ export function CodeLine({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div style={{ ...lineRowFor(ln.kind), ...(sevColor ? lineSeverityStripe(sevColor) : {}) }}>
+      <div
+        data-focus-line={focused ? "" : undefined}
+        style={{ ...lineRowFor(ln.kind), ...(sevColor ? lineSeverityStripe(sevColor) : {}), ...(focused ? lineFocusedStyle : {}) }}
+      >
         <span className="mono tnum" style={{ ...s.lineNo, position: "relative" }}>
           {showAdd && target && (
             <button

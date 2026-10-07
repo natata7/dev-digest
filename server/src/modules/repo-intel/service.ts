@@ -32,9 +32,11 @@ import type {
   BlastCallerRow,
   BlastChangedSymbol,
   BlastResult,
+  EndpointFactRow,
   FileRankRow,
   IndexResult,
   IndexState,
+  RankedFileRow,
   RefRow,
   RepoIntel,
   RepoMapResult,
@@ -655,6 +657,22 @@ export class RepoIntelService implements RepoIntel {
     return out;
   }
 
+  async getRankedFiles(repoId: string): Promise<RankedFileRow[]> {
+    if (!this.container.config.repoIntelEnabled) return [];
+    const rows = await this.repo.getAllRanked(repoId);
+    return rows.map((r) => ({ ...r, junk: isJunkPath(r.path) }));
+  }
+
+  async getEndpointFacts(repoId: string): Promise<EndpointFactRow[]> {
+    if (!this.container.config.repoIntelEnabled) return [];
+    const rows = await this.repo.getAllEndpointFacts(repoId);
+    const out: EndpointFactRow[] = [];
+    for (const r of rows) {
+      for (const endpoint of [...r.endpoints].sort()) out.push({ file: r.file, endpoint });
+    }
+    return out;
+  }
+
   /**
    * Dependency chains from the highest-ranked files (onboarding reading-path).
    * For each of the top roots, greedily follow the highest-ranked import target
@@ -686,7 +704,7 @@ export class RepoIntelService implements RepoIntel {
       for (let depth = 0; depth < BFS_DEPTH; depth += 1) {
         const next = (adj.get(cur) ?? [])
           .filter((t) => !inChain.has(t))
-          .sort((a, b) => (rankOf.get(b) ?? 0) - (rankOf.get(a) ?? 0))[0];
+          .sort((a, b) => (rankOf.get(b) ?? 0) - (rankOf.get(a) ?? 0) || (a < b ? -1 : a > b ? 1 : 0))[0];
         if (!next) break;
         chain.push(next);
         inChain.add(next);

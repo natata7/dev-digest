@@ -32,17 +32,106 @@ export const OnboardingLink = z.object({
 });
 export type OnboardingLink = z.infer<typeof OnboardingLink>;
 
+export const OnboardingSectionKind = z.enum([
+  'architecture',
+  'critical_paths',
+  'local_run',
+  'reading_order',
+  'first_tasks',
+]);
+export type OnboardingSectionKind = z.infer<typeof OnboardingSectionKind>;
+
+export const OnboardingSectionSource = z.enum(['llm', 'facts']);
+export type OnboardingSectionSource = z.infer<typeof OnboardingSectionSource>;
+
 export const OnboardingSection = z.object({
-  kind: z.string(),
+  kind: OnboardingSectionKind,
   title: z.string(),
   body: z.string(), // markdown
   diagram: z.string().nullish(), // mermaid
   links: z.array(OnboardingLink),
+  source: OnboardingSectionSource,
 });
 export type OnboardingSection = z.infer<typeof OnboardingSection>;
 
+export const OnboardingReadingItem = z.object({
+  path: z.string(),
+  score: z.number(),
+  why: z.string().nullable(),
+});
+export type OnboardingReadingItem = z.infer<typeof OnboardingReadingItem>;
+
+export const OnboardingStatus = z.enum(['complete', 'partial', 'skeleton']);
+export type OnboardingStatus = z.infer<typeof OnboardingStatus>;
+
+export const OnboardingLlmReason = z.enum([
+  'llm_failed',
+  'llm_timeout',
+  'llm_invalid_output',
+  'llm_not_configured',
+]);
+export type OnboardingLlmReason = z.infer<typeof OnboardingLlmReason>;
+
+export const OnboardingReason = z.enum([
+  'index_partial',
+  'no_index',
+  'index_degraded',
+  'index_failed',
+  'flag_off',
+  ...OnboardingLlmReason.options,
+]);
+export type OnboardingReason = z.infer<typeof OnboardingReason>;
+
+export const OnboardingCoverageCount = z.object({
+  shown: z.number().int().min(0),
+  total: z.number().int().min(0),
+  truncated: z.boolean(),
+});
+export type OnboardingCoverageCount = z.infer<typeof OnboardingCoverageCount>;
+
+export const OnboardingCoverage = z.object({
+  index_status: z.enum(['full', 'partial', 'degraded', 'failed', 'none']),
+  files_indexed: z.number().int().min(0),
+  files_skipped: z.number().int().min(0),
+  routes: OnboardingCoverageCount,
+  scripts: OnboardingCoverageCount,
+  structure: OnboardingCoverageCount,
+  reading_path: OnboardingCoverageCount,
+  critical_paths: OnboardingCoverageCount,
+});
+export type OnboardingCoverage = z.infer<typeof OnboardingCoverage>;
+
+export const OnboardingRankingBasis = z.enum(['pagerank', 'pagerank_hotness']);
+export type OnboardingRankingBasis = z.infer<typeof OnboardingRankingBasis>;
+
+export const OnboardingRunStep = z.object({
+  command: z.string(),
+  note: z.string().nullable(),
+  source: OnboardingSectionSource,
+});
+export type OnboardingRunStep = z.infer<typeof OnboardingRunStep>;
+
+export const OnboardingFirstTask = z.object({ title: z.string(), path: z.string() });
+export type OnboardingFirstTask = z.infer<typeof OnboardingFirstTask>;
+
 export const Onboarding = z.object({
-  sections: z.array(OnboardingSection),
+  sections: z.array(OnboardingSection).length(5),
+  reading_path: z.array(OnboardingReadingItem),
+  status: OnboardingStatus,
+  reason: OnboardingReason.nullable(),
+  regeneration_error: OnboardingLlmReason.nullable(),
+  ranking_basis: OnboardingRankingBasis,
+  coverage: OnboardingCoverage,
+  indexed_sha: z.string().nullable(),
+  generated_at: z.string(), // ISO
+  outdated: z.boolean(),
+  model: z.string().nullable(),
+  tokens_in: z.number().int().nullable(),
+  tokens_out: z.number().int().nullable(),
+  cost_usd: z.number().nullable(),
+  // optional: tours stored before revision 2 omit them; no .max (caps enforced server-side)
+  run_steps: z.array(OnboardingRunStep).optional(),
+  first_tasks: z.array(OnboardingFirstTask).optional(),
 });
 export type Onboarding = z.infer<typeof Onboarding>;
 
@@ -158,6 +247,7 @@ export const Skill = z.object({
   version: z.number().int(),
   agent_count: z.number().int().nonnegative().optional(),
   evidence_files: z.array(z.string()).nullish(),
+  context_paths: z.array(z.string()),
 });
 export type Skill = z.infer<typeof Skill>;
 
@@ -271,6 +361,7 @@ export const Agent = z.object({
   // Inject repo-intel context (repo skeleton + callers + rank note) into this
   // agent's review prompt. Default on; gated again by the global flag.
   repo_intel: z.boolean().default(true),
+  context_paths: z.array(z.string()),
 });
 export type Agent = z.infer<typeof Agent>;
 

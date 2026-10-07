@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { FindingRecord, PrFile, SmartDiff } from "@devdigest/shared";
-import { groupFiles, filesWithFindingsCount } from "./helpers";
+import { groupFiles, filesWithFindingsCount, roleOfPath } from "./helpers";
 
 function file(path: string): PrFile {
   return { path, additions: 1, deletions: 0, patch: "@@ -1 +1 @@\n+x" };
@@ -65,5 +65,18 @@ describe("filesWithFindingsCount", () => {
 
   it("is 0 when there are no findings", () => {
     expect(filesWithFindingsCount([file("src/a.ts")], [])).toBe(0);
+  });
+});
+
+describe("roleOfPath", () => {
+  const files = [file("src/a.ts"), file("src/a.test.ts"), file("README.md")];
+  const groups = groupFiles(SMART_DIFF, files);
+  it("returns the role group holding the path", () => {
+    expect(roleOfPath(groups, "src/a.ts")).toBe("core");
+    expect(roleOfPath(groups, "README.md")).toBe("docs");
+  });
+  it("returns null for a path in no group or when there are no groups", () => {
+    expect(roleOfPath(groups, "nope.ts")).toBeNull();
+    expect(roleOfPath([], "src/a.ts")).toBeNull();
   });
 });

@@ -58,6 +58,16 @@ export class SkillsRepository {
     return row;
   }
 
+  /** Plain column update: no version bump, no skill_versions row. */
+  async setContextPaths(workspaceId: string, id: string, paths: string[]): Promise<SkillRow | undefined> {
+    const [row] = await this.db
+      .update(t.skills)
+      .set({ contextPaths: paths })
+      .where(and(eq(t.skills.workspaceId, workspaceId), eq(t.skills.id, id)))
+      .returning();
+    return row;
+  }
+
   async deleteById(workspaceId: string, id: string): Promise<boolean> {
     const rows = await this.db
       .delete(t.skills)

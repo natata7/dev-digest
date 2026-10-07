@@ -1,0 +1,17 @@
+{
+  "name": "PR Brief focus item deep-links into Files changed",
+  "description": "From PR #482 Overview, confirm the seeded PR Brief shows 'Review focus', click the src/config.ts focus item, and land on the Files changed tab at that file. Read-only seeded data (pr_brief row from the seed; no model call). Assumes a freshly-seeded DB (see e2e/README.md).",
+  "steps": [
+    { "cmd": ["open", "{BASE}/"], "label": "load the app root" },
+    { "cmd": ["wait", "--url", "/pulls"], "label": "land on the PR list" },
+    { "cmd": ["find", "text", "Add rate limiting to public API endpoints", "click"], "label": "open the PR row" },
+    { "cmd": ["wait", "--url", "/pulls/482"], "label": "navigate to the PR detail route" },
+    { "cmd": ["wait", "--load", "networkidle"], "label": "PR detail data settles" },
+    { "cmd": ["wait", "--text", "Hardcoded secret key added here."], "label": "seeded brief shows its Review focus item on Overview (the 'Review focus' card title is CSS-uppercased, so assert on the item reason instead)" },
+    { "cmd": ["scrollintoview", "[aria-label=\"Open src/config.ts line 12 in Files changed\"]"], "label": "scroll the focus item into view (CI viewport is short; the card sits below the fold)" },
+    { "cmd": ["find", "role", "button", "click", "--name", "Open src/config.ts line 12 in Files changed"], "label": "click the src/config.ts focus item" },
+    { "cmd": ["wait", "--url", "tab=diff"], "label": "diff tab is active in the URL" },
+    { "cmd": ["wait", "--url", "file=src"], "label": "file focus is carried in the URL" },
+    { "cmd": ["wait", "--text", "src/config.ts"], "label": "the focused file renders in the diff viewer" }
+  ]
+}

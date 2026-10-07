@@ -1,0 +1,20 @@
+/* D21: the two rules inline styles cannot express. */
+@media (max-width: 1279px) {
+  .toc {
+    display: none;
+  }
+}
+
+.tasksWrap {
+  container-type: inline-size;
+}
+.tasks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@container (max-width: 899px) {
+  .tasks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

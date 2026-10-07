@@ -88,6 +88,8 @@ export const RunTrace = z.object({
   raw_output: z.string(),
   memory_pulled: z.array(MemoryPulled),
   specs_read: z.array(z.string()),
+  specs_read_detail: z.array(z.object({ path: z.string(), tokens: z.number().int() })).optional(),
+  specs_skipped: z.array(z.object({ path: z.string(), reason: z.literal('missing') })).optional(),
   log: z.array(RunLogLine),
 });
 export type RunTrace = z.infer<typeof RunTrace>;

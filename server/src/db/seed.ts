@@ -2,7 +2,8 @@ import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { createDb, type Db } from './client.js';
 import * as t from './schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
+import { PrBrief } from '@devdigest/shared';
 import {
   GENERAL_REVIEWER_PROMPT,
   SECURITY_REVIEWER_PROMPT,
@@ -210,6 +211,52 @@ export async function seed(db: Db): Promise<{ workspaceId: string; userId: strin
       },
     ]);
   }
+
+  // ---- PR Brief for #482 (deterministic e2e; no LLM). Idempotent: patch only if missing, brief onConflictDoNothing. ----
+  await db
+    .update(t.prFiles)
+    .set({
+      patch: [
+        '@@ -10,3 +10,7 @@ export const config = {',
+        '   port: 3000,',
+        '   env: process.env.NODE_ENV,',
+        "+  stripeKey: 'sk_live_REDACTED_DEMO',",
+        '+  rateLimitMax: 100,',
+        '+  rateLimitWindowMs: 60_000,',
+        '+  trustProxy: true,',
+        ' };',
+      ].join('\n'),
+    })
+    .where(and(eq(t.prFiles.prId, pr!.id), eq(t.prFiles.path, 'src/config.ts'), isNull(t.prFiles.patch)));
+  const brief = PrBrief.parse({
+    summary: 'Adds a token-bucket rate limiter to public API endpoints and wires its limits through config.',
+    intent: null,
+    blast: null,
+    risks: {
+      risks: [
+        {
+          kind: 'security',
+          title: 'Secret committed in config',
+          explanation: 'A literal Stripe live key is added to src/config.ts.',
+          severity: 'high',
+          file_refs: ['src/config.ts'],
+        },
+        {
+          kind: 'performance',
+          title: 'Per-user query inside the limiter path',
+          explanation: 'The user list endpoint issues one query per user.',
+          severity: 'medium',
+          file_refs: ['src/api/users.ts'],
+        },
+      ],
+    },
+    review_focus: [{ file: 'src/config.ts', line: 12, reason: 'Hardcoded secret key added here.' }],
+    head_sha: pr!.headSha,
+    generated_at: new Date().toISOString(),
+    missing_inputs: ['intent', 'blast'],
+    generation: { provider: 'seed', model: 'seed', tokens_in: 0, tokens_out: 0, cost_usd: null, attempts: 1 },
+  });
+  await db.insert(t.prBrief).values({ prId: pr!.id, json: brief }).onConflictDoNothing();
 
   // ---- PR #901 (happy-path-only tests — control experiment) ----
   let [pr901] = await db

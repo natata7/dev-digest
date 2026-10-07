@@ -24,6 +24,8 @@ import {
   ConventionCandidate,
   ConventionList,
   ConventionCompose,
+  PrBrief,
+  PrBriefDraft,
 } from '@devdigest/shared';
 
 /**
@@ -135,11 +137,49 @@ describe('AI contracts parse fixtures', () => {
         completeness_pct: 80,
       }),
     ).not.toThrow();
-    expect(() =>
-      Onboarding.parse({
-        sections: [{ kind: 'architecture', title: 'T', body: 'b', links: [] }],
-      }),
-    ).not.toThrow();
+    const count = { shown: 0, total: 0, truncated: false };
+    const kinds = ['architecture', 'critical_paths', 'local_run', 'reading_order', 'first_tasks'];
+    const sections = kinds.map((kind) => ({ kind, title: 'T', body: 'b', links: [], source: 'facts' }));
+    const tour = {
+      sections,
+      reading_path: [{ path: 'a.ts', score: 0.5, why: null }],
+      status: 'skeleton',
+      reason: 'no_index',
+      regeneration_error: null,
+      ranking_basis: 'pagerank',
+      coverage: {
+        index_status: 'none',
+        files_indexed: 0,
+        files_skipped: 0,
+        routes: count,
+        scripts: count,
+        structure: count,
+        reading_path: count,
+        critical_paths: count,
+      },
+      indexed_sha: null,
+      generated_at: '2026-01-01T00:00:00.000Z',
+      outdated: false,
+      model: null,
+      tokens_in: null,
+      tokens_out: null,
+      cost_usd: null,
+    };
+    expect(() => Onboarding.parse(tour)).not.toThrow();
+    // AC-52 / E27: revision-1 tour (no run_steps/first_tasks) parses; revision-2 fields parse too
+    expect(Onboarding.safeParse(tour).success).toBe(true);
+    const r2 = {
+      ...tour,
+      run_steps: [{ command: 'npm run dev', note: null, source: 'facts' }],
+      first_tasks: [{ title: 'Read a', path: 'a.ts' }],
+    };
+    expect(Onboarding.parse(r2).run_steps).toHaveLength(1);
+    expect(Onboarding.safeParse({ ...r2, run_steps: [{ command: 'x', note: null }] }).success).toBe(false);
+    // E21: old shape and wrong section count are rejected
+    expect(
+      Onboarding.safeParse({ sections: [{ kind: 'architecture', title: 'T', body: 'b', links: [] }] }).success,
+    ).toBe(false);
+    expect(Onboarding.safeParse({ ...tour, sections: sections.slice(0, 4) }).success).toBe(false);
     expect(() =>
       EvalRun.parse({
         recall: 0.82,
@@ -199,6 +239,7 @@ describe('SkillSource', () => {
         body: '# Flaky tests',
         enabled: false,
         version: 1,
+        context_paths: [],
       }).source,
     ).toBe('imported');
   });
@@ -341,5 +382,37 @@ describe('Convention contracts', () => {
     expect(() => ConventionCompose.parse({ ...base, name: '' })).toThrow();
     expect(() => ConventionCompose.parse({ ...base, description: '' })).toThrow();
     expect(() => ConventionCompose.parse({ ...base, body: '' })).toThrow();
+  });
+});
+
+describe('PrBrief / PrBriefDraft', () => {
+  const brief = {
+    summary: 's',
+    intent: null,
+    blast: null,
+    risks: { risks: [{ kind: 'k', title: 't', explanation: 'e', severity: 'high', file_refs: ['a.ts'] }] },
+    review_focus: [{ file: 'a.ts', line: 3, reason: 'r' }],
+    head_sha: 'abc',
+    generated_at: '2026-01-01T00:00:00Z',
+    missing_inputs: ['intent', 'blast'],
+    generation: { provider: 'p', model: 'm', tokens_in: 1, tokens_out: 2, cost_usd: null, attempts: 1 },
+  };
+  it('parses without history and with null intent/blast', () => {
+    expect(PrBrief.parse(brief).history).toBeUndefined();
+  });
+  it('parses a full brief', () => {
+    const full = {
+      ...brief,
+      intent: { intent: 'i', in_scope: [], out_of_scope: [] },
+      blast: { changed_symbols: [], downstream: [], summary: '' },
+      history: { history: [] },
+    };
+    expect(PrBrief.parse(full).intent?.confidence).toBe('medium');
+  });
+  it('PrBriefDraft rejects missing review_focus and non-int line', () => {
+    const d = { summary: 's', risks: [], review_focus: [{ file: 'a', line: 1, reason: 'r' }] };
+    expect(() => PrBriefDraft.parse(d)).not.toThrow();
+    expect(() => PrBriefDraft.parse({ summary: 's', risks: [] })).toThrow();
+    expect(() => PrBriefDraft.parse({ ...d, review_focus: [{ file: 'a', line: 1.5, reason: 'r' }] })).toThrow();
   });
 });

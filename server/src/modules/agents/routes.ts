@@ -3,7 +3,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { CiFailOn, Provider, ReviewStrategy } from '@devdigest/shared';
 import { getContext } from '../_shared/context.js';
-import { IdParams } from '../_shared/schemas.js';
+import { IdParams, ContextPathsBody } from '../_shared/schemas.js';
 import { NotFoundError } from '../../platform/errors.js';
 import { AgentsService } from './service.js';
 
@@ -116,6 +116,17 @@ export default async function agentsRoutes(appBase: FastifyInstance) {
     async (req) => {
       const { workspaceId } = await getContext(app.container, req);
       const agent = await service.update(workspaceId, req.params.id, req.body);
+      if (!agent) throw new NotFoundError('Agent not found');
+      return agent;
+    },
+  );
+
+  app.put(
+    '/agents/:id/context',
+    { schema: { params: IdParams, body: ContextPathsBody } },
+    async (req) => {
+      const { workspaceId } = await getContext(app.container, req);
+      const agent = await service.setContext(workspaceId, req.params.id, req.body.paths);
       if (!agent) throw new NotFoundError('Agent not found');
       return agent;
     },

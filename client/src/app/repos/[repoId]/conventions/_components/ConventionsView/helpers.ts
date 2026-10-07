@@ -2,12 +2,8 @@ import type { RepoProvider } from "@/lib/types";
 import type { ConventionCandidate } from "@devdigest/shared";
 import { repoBlobUrl } from "@/lib/repo-urls";
 
-/** Last path segment of `owner/name` (or nested GitLab groups). */
-export function repoDisplayName(fullName: string | undefined, fallback: string): string {
-  if (!fullName) return fallback;
-  const parts = fullName.split("/").filter(Boolean);
-  return parts[parts.length - 1] ?? fallback;
-}
+// D22: promoted to lib (second consumer: onboarding); re-exported so imports/tests stay unchanged.
+export { repoDisplayName } from "@/lib/repo-urls";
 
 export function pathRangeLabel(
   path: string,

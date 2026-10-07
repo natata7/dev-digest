@@ -68,6 +68,13 @@ export class AgentsService {
     return dto;
   }
 
+  async setContext(workspaceId: string, id: string, paths: string[]): Promise<Agent | undefined> {
+    const row = await this.repo.setContextPaths(workspaceId, id, paths);
+    if (!row) return undefined;
+    const [dto] = await this.toDtos([row]);
+    return dto;
+  }
+
   /** Delete an agent (and its versions/skill-links, via cascade). */
   async delete(workspaceId: string, id: string): Promise<boolean> {
     return this.repo.deleteById(workspaceId, id);

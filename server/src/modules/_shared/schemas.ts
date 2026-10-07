@@ -10,3 +10,20 @@ import { z } from 'zod';
  */
 export const IdParams = z.object({ id: z.string().uuid() });
 export type IdParams = z.infer<typeof IdParams>;
+
+export const MAX_CONTEXT_PATHS = 100;
+
+/** Body for PUT /agents|skills/:id/context. Existence on disk is NOT checked (a vanished file is allowed). */
+export const ContextPathsBody = z.object({
+  paths: z
+    .array(
+      z
+        .string()
+        .min(1)
+        .refine((p) => !p.startsWith('/') && !p.includes('\\') && !p.split('/').includes('..'), {
+          message: 'Path must be relative and must not contain ..',
+        }),
+    )
+    .max(MAX_CONTEXT_PATHS)
+    .refine((a) => new Set(a).size === a.length, { message: 'Duplicate paths' }),
+});

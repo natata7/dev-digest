@@ -49,17 +49,35 @@ export function FileCard({
   commenting,
   findings,
   defaultOpen,
+  focus,
 }: {
   file: PrFile;
   commenting?: DiffCommentApi;
   findings?: DiffFindingApi;
   defaultOpen?: boolean;
+  focus?: { path: string; line?: number };
 }) {
   const t = useTranslations("shell");
   const [open, setOpen] = React.useState(
     defaultOpen ?? (file.additions ?? 0) + (file.deletions ?? 0) <= AUTO_EXPAND_MAX_LINES,
   );
   const lines = React.useMemo(() => parsePatch(file.patch), [file.patch]);
+
+  // Deep-link focus overrides defaultOpen; scroll only once lines have rendered.
+  const focused = focus?.path === file.path;
+  const focusLine = focused ? focus?.line : undefined;
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (focused) setOpen(true);
+  }, [focused]);
+  React.useEffect(() => {
+    if (!focused || !open) return;
+    const id = requestAnimationFrame(() => {
+      const el = focusLine != null ? rootRef.current?.querySelector("[data-focus-line]") : null;
+      (el ?? rootRef.current)?.scrollIntoView?.({ block: "center" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [focused, open, focusLine]);
 
   // Group this file's comments into threads, then split into ones we can anchor
   // to a rendered line vs. "outdated" (GitHub dropped the line / it's not here).
@@ -91,7 +109,7 @@ export function FileCard({
     : false;
 
   return (
-    <div style={s.fileCard}>
+    <div ref={rootRef} style={s.fileCard}>
       <div onClick={() => setOpen((o) => !o)} style={s.fileHeader}>
         <Icon.ChevronRight size={13} style={chevronFor(open)} />
         <Icon.FileText size={14} style={s.fileIcon} />
@@ -132,6 +150,7 @@ export function FileCard({
                 commenting={commenting}
                 findings={findingsForLine(ln, findingsMatched)}
                 findingApi={findings}
+                focused={focusLine != null && ln.kind !== "del" && ln.newNo === focusLine}
               />
             ))
           )}

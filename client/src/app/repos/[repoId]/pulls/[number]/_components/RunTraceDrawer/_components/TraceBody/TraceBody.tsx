@@ -19,6 +19,10 @@ import { Row, Stat } from "../atoms";
 export function TraceBody({ trace, findings }: { trace: RunTrace; findings: FindingRecord[] }) {
   const t = useTranslations("runs");
   const stats = trace.stats;
+  // Older traces only carry `specs_read` (paths, no tokens).
+  const specsRead: { path: string; tokens?: number }[] =
+    trace.specs_read_detail ?? trace.specs_read.map((path) => ({ path }));
+  const skipped = trace.specs_skipped ?? [];
   return (
     <>
       <TraceSection icon="Settings" title={t("trace.configuration")}>
@@ -38,17 +42,29 @@ export function TraceBody({ trace, findings }: { trace: RunTrace; findings: Find
           </Row>
           <Row label={t("trace.config.specsRead")}>
             <div style={s.specsWrap}>
-              {trace.specs_read.length === 0 ? (
+              {specsRead.length === 0 ? (
                 <span style={s.specsNone}>{t("trace.config.none")}</span>
               ) : (
-                trace.specs_read.map((sp, i) => (
+                specsRead.map((sp, i) => (
                   <span key={i} className="mono" style={s.spec}>
-                    {sp}
+                    {sp.path}
+                    {sp.tokens != null && ` · ${t("trace.config.specsTokens", { count: sp.tokens })}`}
                   </span>
                 ))
               )}
             </div>
           </Row>
+          {skipped.length > 0 && (
+            <Row label={t("trace.config.specsSkipped")}>
+              <div style={s.specsWrap}>
+                {skipped.map((sp, i) => (
+                  <span key={i} className="mono" style={s.spec}>
+                    {sp.path}
+                  </span>
+                ))}
+              </div>
+            </Row>
+          )}
         </div>
       </TraceSection>
 
