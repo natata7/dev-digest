@@ -12,7 +12,7 @@ Use this skill when you need to:
 - Add or change an integration under `server/src/adapters/*` (GitHub, GitLab, LLM providers, git, embedder, …) or `reviewer-core/src/llm/`
 - Wire a new dependency through `server/src/platform/container.ts`
 - Define or change a port interface in `server/src/vendor/shared/adapters.ts` (`@devdigest/shared`)
-- Review backend code for layering violations (a route querying the DB directly, a service importing Fastify or Drizzle types, business logic that can't be unit-tested without Postgres)
+- Review backend code for layering violations, including one module reaching into another's repository, or a port whose signature names SDK types (a route querying the DB directly, a service importing Fastify or Drizzle types, business logic that can't be unit-tested without Postgres)
 - Decide whether new logic belongs in `reviewer-core` (pure) or `server` (has I/O)
 
 This skill does **not** cover `client/` (Next.js — see `ui-architecture`, `next-best-practices`) or `e2e/` (browser driver, no business logic).
@@ -43,7 +43,8 @@ The port interfaces themselves (`LLMProvider`, `CodeHostClient`, `GitClient`, `E
 - **Adding a new feature module?** `layers.md` → `application-layer.md` → `infrastructure-layer.md` → `presentation-layer.md`
 - **Adding a new external integration (GitHub/LLM/etc.)?** `infrastructure-layer.md` → `dependency-injection.md`
 - **Deciding server vs. reviewer-core for new logic?** `domain-layer.md` → `references/reviewer-core-case-study.md`
-- **Reviewing a PR for architecture issues?** `anti-patterns.md`
+- **Reviewing a PR for architecture issues?** `anti-patterns.md` → `module-boundaries.md`
+- **One module needs another module's data, or a port signature mentions an SDK type?** `module-boundaries.md`
 - **"Why can't I test this without Postgres?"** `testing-strategy.md`
 - **Want this enforced automatically instead of by review?** `enforcement.md`
 
@@ -58,6 +59,7 @@ Read the relevant rule file(s) for detailed explanations and repo-grounded code 
 - [rules/presentation-layer.md](rules/presentation-layer.md) — thin Fastify routes, Zod validation at the boundary
 - [rules/dependency-injection.md](rules/dependency-injection.md) — wiring ports to adapters through `platform/container.ts`
 - [rules/testing-strategy.md](rules/testing-strategy.md) — why hermetic vs. `.it.test.ts` maps directly to the layer boundary
+- [rules/module-boundaries.md](rules/module-boundaries.md) — modules interact via services only, port signatures stay vendor-free, repositories never hold business decisions
 - [rules/anti-patterns.md](rules/anti-patterns.md) — concrete violations to flag in review
 - [rules/enforcement.md](rules/enforcement.md) — optional lint-level enforcement (eslint-plugin-boundaries / dependency-cruiser)
 - [references/reviewer-core-case-study.md](references/reviewer-core-case-study.md) — `reviewer-core` walked through end-to-end as the working example

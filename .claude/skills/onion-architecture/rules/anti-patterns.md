@@ -78,3 +78,15 @@ const octokit = new Octokit({ auth: token });
 
 **Breaks:** every exception like this is invisible until the day you actually need to swap or mock that dependency, at which point it's a surprise. The container/port indirection exists precisely so "swap the LLM provider" or "mock GitHub in tests" is a one-file change — one exception erodes that guarantee silently.
 **Fix:** even for a small/debug/one-off use, go through the existing port (`container.github`) or add the missing method to it if the port doesn't cover this case yet.
+
+## 8. One module importing another module's repository
+
+See [module-boundaries.md](module-boundaries.md) §1 — go through the owning module's service.
+
+## 9. A port signature that names a vendor SDK type
+
+See [module-boundaries.md](module-boundaries.md) §2 — ports return shared contracts; adapters do the mapping.
+
+## 10. Business policy encoded in a repository query
+
+See [module-boundaries.md](module-boundaries.md) §3 — thresholds and ranking belong in a pure domain function.
