@@ -100,7 +100,7 @@ Covers AC-14 – AC-18, NFR-1, E1–E6. Pure function over expectations + findin
 - [x] 2.4 Write `scoring.test.ts` covering every case listed in the proof artifact, including a table-driven set for the "clean case" and "no findings" paths, and the explicit AC-18 case where grounding-dropped findings lower citation_accuracy.
 - [x] 2.5 Write `scoring.no-llm.test.ts` as described; make it fail with a clear message naming the offending import.
 
-### [ ] 3.0 One-click "Turn into eval case" (server + FindingCard)
+### [x] 3.0 One-click "Turn into eval case" (server + FindingCard)
 
 Covers AC-1 – AC-7, E8, E9, E12, NFR-4 (secret masking).
 
@@ -111,12 +111,12 @@ Covers AC-1 – AC-7, E8, E9, E12, NFR-4 (secret masking).
 - Screenshot: `specs/10-spec-eval-pipeline/screenshots/01-finding-card.png` showing the "Turn into eval case" button in the action row of an accepted finding on the running app.
 
 #### 3.0 Tasks
-- [ ] 3.1 Add pure helpers in `server/src/modules/eval/helpers.ts`: cut a diff fragment containing `[start_line, end_line]` of the finding's file with ±20 context lines (from the unified diff), mask secrets with a regex set (`sk_live_`, `sk_test_`, `ghp_`, AWS key ids, generic `key|secret|token = "…"` long values) while preserving line count, and build a unique case name from the finding title.
-- [ ] 3.2 Implement `EvalService.createFromFinding(workspaceId, findingId, expectation?)`: load via `findingContext`, check workspace, resolve the agent from the review, derive the kind (accepted → `must_find`, dismissed → `must_not_flag`, otherwise the given value or `must_find`), load the diff with `loadDiff`, cut + mask the fragment, de-duplicate (AC-5), insert the case with `source_finding_id`.
-- [ ] 3.3 Add the route `POST /findings/:id/eval-case` with `CreateEvalCaseFromFinding` body and `EvalCaseRecord` response in `server/src/modules/eval/routes.ts`; register the `eval` module in `server/src/modules/index.ts`.
-- [ ] 3.4 Add `useCreateEvalCaseFromFinding` to `client/src/lib/hooks/eval.ts` (invalidates the agent's case list) and export it from the hooks barrel.
-- [ ] 3.5 Add the button to `FindingCard.tsx` after "Learn" (icon from `@devdigest/ui`, text label), with `pending` handling that prevents double submit, a confirmation toast "Case created" / "Case already exists", and a type picker shown only for undecided findings (D2). Wire it through the PR page's findings list.
-- [ ] 3.6 Add strings to the messages files; write the service, route (integration) and FindingCard tests; capture screenshot `01-finding-card.png`.
+- [x] 3.1 Add pure helpers in `server/src/modules/eval/helpers.ts`: cut a diff fragment containing `[start_line, end_line]` of the finding's file with ±20 context lines (from the unified diff), mask secrets with a regex set (`sk_live_`, `sk_test_`, `ghp_`, AWS key ids, generic `key|secret|token = "…"` long values) while preserving line count, and build a unique case name from the finding title.
+- [x] 3.2 Implement `EvalService.createFromFinding(workspaceId, findingId, expectation?)`: load via `findingContext`, check workspace, resolve the agent from the review, derive the kind (accepted → `must_find`, dismissed → `must_not_flag`, otherwise the given value or `must_find`), load the diff with `loadDiff`, cut + mask the fragment, de-duplicate (AC-5), insert the case with `source_finding_id`.
+- [x] 3.3 Add the route `POST /findings/:id/eval-case` with `CreateEvalCaseFromFinding` body and `EvalCaseRecord` response in `server/src/modules/eval/routes.ts`; register the `eval` module in `server/src/modules/index.ts`.
+- [x] 3.4 Add `useCreateEvalCaseFromFinding` to `client/src/lib/hooks/eval.ts` (invalidates the agent's case list) and export it from the hooks barrel.
+- [x] 3.5 Add the button to `FindingCard.tsx` after "Learn" (icon from `@devdigest/ui`, text label), with `pending` handling that prevents double submit, a confirmation toast "Case created" / "Case already exists", and a type picker shown only for undecided findings (D2). Wire it through the PR page's findings list.
+- [x] 3.6 Add strings to the messages files; write the service, route (integration) and FindingCard tests. Screenshot `01-finding-card.png` is captured in the consolidated pass in 6.5 (needs the running app).
 
 ### [ ] 4.0 Agent eval run: `POST /agents/:id/eval-runs`, history, compare, dashboard API, ≥ 8 seeded cases
 

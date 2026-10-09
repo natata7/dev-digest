@@ -8,6 +8,8 @@ import { Toggle, EmptyState, SeverityBadge, type Severity as UiSeverity } from "
 import type { FindingRecord, Severity, RepoProvider } from "@devdigest/shared";
 import { FindingCard } from "../FindingCard";
 import { useFindingAction } from "../../../../../../../lib/hooks/reviews";
+import { useCreateEvalCaseFromFinding } from "../../../../../../../lib/hooks/eval";
+import { notify } from "../../../../../../../lib/toast";
 import { FILTERABLE_SEVERITIES, KEY_TO_ACTION } from "./constants";
 import { severityCounts, visibleFindings } from "./helpers";
 import { s } from "./styles";
@@ -27,6 +29,25 @@ export function FindingsPanel({
 }) {
   const t = useTranslations("prReview");
   const action = useFindingAction();
+  const toEval = useCreateEvalCaseFromFinding();
+  const [evalState, setEvalState] = React.useState<Record<string, "pending" | "created" | "exists">>({});
+  const turnIntoEval = (findingId: string, expectation?: "must_find" | "must_not_flag") => {
+    setEvalState((m) => (m[findingId] ? m : { ...m, [findingId]: "pending" }));
+    toEval.mutate(
+      { findingId, expectation },
+      {
+        onSuccess: (res) => {
+          setEvalState((m) => ({ ...m, [findingId]: res.created ? "created" : "exists" }));
+          notify.success(t(res.created ? "finding.evalCreated" : "finding.evalExists"));
+        },
+        onError: () =>
+          setEvalState((m) => {
+            const { [findingId]: _drop, ...rest } = m;
+            return rest;
+          }),
+      },
+    );
+  };
   const [hideLow, setHideLow] = React.useState(false);
   const [focusIdx, setFocusIdx] = React.useState(0);
   const [severityFilter, setSeverityFilter] = React.useState<Severity | null>(null);
@@ -100,6 +121,8 @@ export function FindingsPanel({
               repoProvider={repoProvider}
               headSha={headSha}
               onAction={(act) => action.mutate({ findingId: f.id, action: act, prId })}
+              evalStatus={evalState[f.id] ?? "idle"}
+              onTurnIntoEval={(exp) => turnIntoEval(f.id, exp)}
             />
           ))
         )}

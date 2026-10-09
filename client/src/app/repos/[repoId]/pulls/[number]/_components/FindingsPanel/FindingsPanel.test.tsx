@@ -8,6 +8,11 @@ vi.mock("../../../../../../../lib/hooks/reviews", () => ({
   useFindingAction: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+const evalMutate = vi.fn();
+vi.mock("../../../../../../../lib/hooks/eval", () => ({
+  useCreateEvalCaseFromFinding: () => ({ mutate: evalMutate, isPending: false }),
+}));
+
 import { FindingsPanel } from "./FindingsPanel";
 
 afterEach(cleanup);
@@ -95,5 +100,20 @@ describe("FindingsPanel (smoke)", () => {
     expect(screen.getByText("Hardcoded secret")).toBeInTheDocument();
     expect(screen.getByText("Rename variable")).toBeInTheDocument();
     expect(warningButton).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
+describe("FindingsPanel → Turn into eval case", () => {
+  it("sends the finding id (and no expectation) for an accepted finding", () => {
+    evalMutate.mockClear();
+    renderWithIntl(
+      <FindingsPanel
+        findings={[finding({ id: "fa", accepted_at: "2026-10-01T00:00:00Z" })]}
+        prId="pr1"
+      />,
+    );
+    fireEvent.click(screen.getByText("Turn into eval case"));
+    expect(evalMutate).toHaveBeenCalledTimes(1);
+    expect(evalMutate.mock.calls[0]![0]).toEqual({ findingId: "fa", expectation: undefined });
   });
 });
