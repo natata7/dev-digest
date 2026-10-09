@@ -134,6 +134,13 @@
       "when": 1790969982230,
       "tag": "0018_gray_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791558910797,
+      "tag": "0019_aberrant_bruce_banner",
+      "breakpoints": true
     }
   ]
 }
