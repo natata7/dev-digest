@@ -1,0 +1,31 @@
+import type { CSSProperties } from "react";
+
+export const s = {
+  page: { padding: "24px 32px 44px", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 } satisfies CSSProperties,
+  head: { display: "flex", alignItems: "flex-end", gap: 14 } satisfies CSSProperties,
+  h1: { fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" } satisfies CSSProperties,
+  sub: { fontSize: 14, color: "var(--text-secondary)", marginTop: 4 } satisfies CSSProperties,
+  spacer: { flex: 1 } satisfies CSSProperties,
+  label: { fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "var(--text-muted)" } satisfies CSSProperties,
+  list: { display: "flex", flexDirection: "column", gap: 10, marginTop: 10 } satisfies CSSProperties,
+  agent: {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    padding: "16px 18px",
+    background: "var(--bg-elevated)",
+    border: "1px solid var(--border)",
+    borderRadius: 9,
+    textDecoration: "none",
+    color: "inherit",
+  } satisfies CSSProperties,
+  agentMain: { flex: 1, minWidth: 0 } satisfies CSSProperties,
+  agentName: { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 16 } satisfies CSSProperties,
+  agentSub: { fontSize: 13, color: "var(--text-secondary)", marginTop: 3 } satisfies CSSProperties,
+  metric: { textAlign: "center", minWidth: 64 } satisfies CSSProperties,
+  metricLabel: { fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--text-muted)" } satisfies CSSProperties,
+  metricValue: { fontSize: 22, fontWeight: 700, marginTop: 2 } satisfies CSSProperties,
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 13 } satisfies CSSProperties,
+  td: { padding: "10px", borderBottom: "1px solid var(--border)" } satisfies CSSProperties,
+  card: { background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 9, padding: 8, marginTop: 10 } satisfies CSSProperties,
+} as const;

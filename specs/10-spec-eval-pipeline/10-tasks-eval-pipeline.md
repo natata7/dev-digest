@@ -137,7 +137,7 @@ Covers AC-8 – AC-13a, AC-19 – AC-25 (API side), AC-26, E7, E11, NFR-2, NFR-3
 - [x] 4.6 Seed ≥ 8 deterministic cases for the built-in Security Reviewer in `seed.ts` (stripe key leak, SSRF webhook, SQL injection, missing authz check, lethal-trifecta, a `must_not_flag` unused-import case, a `must_not_flag` test-fixture-secret case, a clean refactor); guard with the existing "insert if missing by name" pattern; fake secrets are obviously fake and masked.
 - [x] 4.7 Write the service run tests (stubbed provider via `adapters/mocks.ts` patterns), the integration route tests and `seed-eval.test.ts`.
 
-### [ ] 5.0 Client UI: Evals tab, Eval Dashboard page, sidebar entry, Compare modal
+### [x] 5.0 Client UI: Evals tab, Eval Dashboard page, sidebar entry, Compare modal
 
 Covers AC-8, AC-9, AC-13a, AC-19 – AC-25 (UI side), NFR-6.
 
@@ -150,13 +150,13 @@ Covers AC-8, AC-9, AC-13a, AC-19 – AC-25 (UI side), NFR-6.
 - Screenshot: `specs/10-spec-eval-pipeline/screenshots/02-evals-tab.png`, `03-eval-dashboard.png`, `04-compare-modal.png` taken from the running app and matching the spec's six mockups.
 
 #### 5.0 Tasks
-- [ ] 5.1 Write `client/src/lib/hooks/eval.ts`: `useEvalCases`, `useCreateEvalCase`, `useUpdateEvalCase`, `useDeleteEvalCase`, `useRunEvals`, `useEvalRuns`, `useEvalCompare`, `useEvalDashboard`, `useAgentEvalDashboard`; export from the hooks barrel; keys invalidate on run/create/delete.
-- [ ] 5.2 Add the `evals` tab to `AgentEditor/constants.ts` and render `EvalsTab` in `AgentEditor.tsx` (existing `agents.json` already has the `evals` label).
-- [ ] 5.3 Build `EvalsTab` (colocated folder with `styles.ts`, `helpers.ts`, `constants.ts`, `index.ts`): metrics tiles with deltas, "View full dashboard →" link, case list (kind label, last-run state, Run / Edit / Delete), "Run all evals", "New eval case" and the editor modal (Name, Diff, PR meta, expected output JSON with valid/invalid indicator, Save, Run case; the "Finding skeleton" button and "Run on save" toggle are optional and may be skipped). Run rows show date, version, metrics, pass, duration and cost.
-- [ ] 5.4 Create `client/src/app/eval/page.tsx` (agent list with sparkline, three metrics, pass count; "Recent eval runs · all agents" table) and `client/src/app/eval/[agentId]/page.tsx` (three metric cards with deltas, alert banner, trend chart using the existing chart primitives from `@devdigest/ui`, runs table with checkboxes and Compare). Pages stay thin; logic in `_components`.
-- [ ] 5.5 Build `CompareRuns` modal: four metric deltas (recall, precision, citation, cost), the system prompt line diff computed on the client from the two prompt texts (pure helper in `helpers.ts` with its own test), "prompts are identical" state, Close.
-- [ ] 5.6 Add the `eval` item (label "Eval Dashboard", icon `Gauge` — already exported from `client/src/vendor/ui/icons.tsx`, href `/eval`) after Conventions in the `SKILLS LAB` group of `client/src/vendor/ui/nav.ts`; add the `helpers.test.ts` case for `activeKeyFor` and the new `nav.test.ts` described in the proof artifacts.
-- [ ] 5.7 Extend `eval.json` strings (compare, prompt diff, turn-into-case); write the component tests; run the app (`./scripts/dev.sh`) and capture screenshots 02–04.
+- [x] 5.1 Write `client/src/lib/hooks/eval.ts`: `useEvalCases`, `useCreateEvalCase`, `useUpdateEvalCase`, `useDeleteEvalCase`, `useRunEvals`, `useEvalRuns`, `useEvalCompare`, `useEvalDashboard`, `useAgentEvalDashboard`; export from the hooks barrel; keys invalidate on run/create/delete.
+- [x] 5.2 Add the `evals` tab to `AgentEditor/constants.ts` and render `EvalsTab` in `AgentEditor.tsx` (existing `agents.json` already has the `evals` label).
+- [x] 5.3 Build `EvalsTab` (colocated folder with `styles.ts`, `helpers.ts`, `constants.ts`, `index.ts`): metrics tiles with deltas, "View full dashboard →" link, case list (kind label, last-run state, Run / Edit / Delete), "Run all evals", "New eval case" and the editor modal (Name, Diff, PR meta, expected output JSON with valid/invalid indicator, Save, Run case; the "Finding skeleton" button and "Run on save" toggle are optional and may be skipped). Run rows show date, version, metrics, pass, duration and cost.
+- [x] 5.4 Create `client/src/app/eval/page.tsx` (agent list with sparkline, three metrics, pass count; "Recent eval runs · all agents" table) and `client/src/app/eval/[agentId]/page.tsx` (three metric cards with deltas, alert banner, trend chart using the existing chart primitives from `@devdigest/ui`, runs table with checkboxes and Compare). Pages stay thin; logic in `_components`.
+- [x] 5.5 Build `CompareRuns` modal: four metric deltas (recall, precision, citation, cost), the system prompt line diff computed on the client from the two prompt texts (pure helper in `helpers.ts` with its own test), "prompts are identical" state, Close.
+- [x] 5.6 Add the `eval` item (label "Eval Dashboard", icon `Gauge` — already exported from `client/src/vendor/ui/icons.tsx`, href `/eval`) after Conventions in the `SKILLS LAB` group of `client/src/vendor/ui/nav.ts`; add the `helpers.test.ts` case for `activeKeyFor` and the new `nav.test.ts` described in the proof artifacts.
+- [x] 5.7 Extend `eval.json` strings (compare, prompt diff, turn-into-case); write the component tests; run the app (`./scripts/dev.sh`) and screenshots 02–04 are captured in 6.5 together with the experiment runs.
 
 ### [ ] 6.0 `pnpm verify:l06`, sensitivity experiment and submission evidence
 
