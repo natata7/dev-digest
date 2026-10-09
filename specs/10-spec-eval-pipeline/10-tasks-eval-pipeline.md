@@ -85,7 +85,7 @@ Covers AC-6, AC-11, AC-12, AC-14 (shape), E10. Foundation for every other task.
 - [x] 1.6 Create `server/src/modules/eval/repository.ts` with typed methods: create/find/list/update/delete case (scoped by workspace), find duplicate by `(agent, source_finding_id, expectation_kind)` and by `(agent, file, range, kind)`, insert agent run with its per-case rows in one transaction, list agent runs, get run pair, per-agent and workspace dashboard aggregates.
 - [x] 1.7 Write `contracts.test.ts` (hermetic) and `repository.it.test.ts` (Postgres) per the proof artifacts; include an assertion that deleting an agent cascades its agent runs and their per-case rows (cases use `owner_id` without an FK, so they stay).
 
-### [ ] 2.0 Deterministic scoring module (no LLM)
+### [x] 2.0 Deterministic scoring module (no LLM)
 
 Covers AC-14 – AC-18, NFR-1, E1–E6. Pure function over expectations + findings.
 
@@ -94,11 +94,11 @@ Covers AC-14 – AC-18, NFR-1, E1–E6. Pure function over expectations + findin
 - Test: `server/src/modules/eval/scoring.no-llm.test.ts` passes — reads `scoring.ts`, asserts it has no import from `adapters/`, `platform/container`, `openai`, `@anthropic-ai/sdk`, `@devdigest/reviewer-core`'s `llm/`, and no use of `fetch`; also calls scoring with `globalThis.fetch` replaced by a throwing stub.
 
 #### 2.0 Tasks
-- [ ] 2.1 Create `server/src/modules/eval/scoring.ts` exporting `rangesOverlap`, `matches(finding, expectation)` (same `file` + inclusive line overlap), `scoreCase({expected, findings, droppedCount})` → counters (`expected_found`, `expected_total`, `noise`, `findings_total`, `grounded`, `produced`) and per-case `pass`, and `aggregate(cases[])` → micro recall / precision / citation_accuracy with `null` when the denominator is 0.
-- [ ] 2.2 Implement the precision rule from the spec: a finding is noise if it matches `must_not_flag`, or if the case has no `must_find` and any finding exists; `must_not_flag` wins over `must_find` when both match (E3); duplicates matching one expectation count once (E2).
-- [ ] 2.3 Keep the module dependency-free (types from `@devdigest/shared` only), with `ponytail`-style small functions and no I/O.
-- [ ] 2.4 Write `scoring.test.ts` covering every case listed in the proof artifact, including a table-driven set for the "clean case" and "no findings" paths, and the explicit AC-18 case where grounding-dropped findings lower citation_accuracy.
-- [ ] 2.5 Write `scoring.no-llm.test.ts` as described; make it fail with a clear message naming the offending import.
+- [x] 2.1 Create `server/src/modules/eval/scoring.ts` exporting `rangesOverlap`, `matches(finding, expectation)` (same `file` + inclusive line overlap), `scoreCase({expected, findings, droppedCount})` → counters (`expected_found`, `expected_total`, `noise`, `findings_total`, `grounded`, `produced`) and per-case `pass`, and `aggregate(cases[])` → micro recall / precision / citation_accuracy with `null` when the denominator is 0.
+- [x] 2.2 Implement the precision rule from the spec: a finding is noise if it matches `must_not_flag`, or if the case has no `must_find` and any finding exists; `must_not_flag` wins over `must_find` when both match (E3); duplicates matching one expectation count once (E2).
+- [x] 2.3 Keep the module dependency-free (types from `@devdigest/shared` only), with `ponytail`-style small functions and no I/O.
+- [x] 2.4 Write `scoring.test.ts` covering every case listed in the proof artifact, including a table-driven set for the "clean case" and "no findings" paths, and the explicit AC-18 case where grounding-dropped findings lower citation_accuracy.
+- [x] 2.5 Write `scoring.no-llm.test.ts` as described; make it fail with a clear message naming the offending import.
 
 ### [ ] 3.0 One-click "Turn into eval case" (server + FindingCard)
 
