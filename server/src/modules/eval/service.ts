@@ -15,6 +15,7 @@ import { enabledSkillBodies } from '../agents/helpers.js';
 import { AppError, NotFoundError, ValidationError } from '../../platform/errors.js';
 import { loadDiff } from '../reviews/diff-loader.js';
 import {
+  CASE_ATTEMPTS,
   CASE_CONCURRENCY,
   CASE_TIMEOUT_MS,
   FRAGMENT_CONTEXT_LINES,
@@ -43,6 +44,8 @@ import { metricsOf, scoreCase, type Counters } from './scoring.js';
 /** Seam for tests: the review engine call. Scoring itself never reaches the model. */
 export interface EvalDeps {
   review: typeof reviewPullRequest;
+  /** Per-attempt timeout override (tests). */
+  caseTimeoutMs?: number;
 }
 
 /** Agents with an eval run in flight (in-process lock — one active run per agent). */
@@ -243,23 +246,33 @@ export class EvalService {
     const started = Date.now();
     const meta = (c.inputMeta ?? {}) as { title?: string; body?: string };
     try {
-      const outcome = await withTimeout(
-        this.deps.review({
-          systemPrompt: agent.systemPrompt,
-          model: agent.model,
-          diff: parseUnifiedDiff(c.inputDiff ?? ''),
-          llm,
-          // Fixed so two runs of different prompts differ only by the prompt.
-          strategy: 'single-pass',
-          ...(skills.length > 0 ? { skills } : {}),
-          ...(meta.body ? { prDescription: meta.body } : {}),
-          task:
-            `Review the pull request "${meta.title ?? c.name}". Report only distinct findings you can defend, ` +
-            `each citing an exact file and line range that appears in the diff. Zero findings is a valid result.`,
-          sessionId: `eval:${agent.name}:${c.name}`,
-        }),
-        CASE_TIMEOUT_MS,
-      );
+      const attempt = () =>
+        withTimeout(
+          this.deps.review({
+            systemPrompt: agent.systemPrompt,
+            model: agent.model,
+            diff: parseUnifiedDiff(c.inputDiff ?? ''),
+            llm,
+            // Fixed so two runs of different prompts differ only by the prompt.
+            strategy: 'single-pass',
+            ...(skills.length > 0 ? { skills } : {}),
+            ...(meta.body ? { prDescription: meta.body } : {}),
+            task:
+              `Review the pull request "${meta.title ?? c.name}". Report only distinct findings you can defend, ` +
+              `each citing an exact file and line range that appears in the diff. Zero findings is a valid result.`,
+            // unique per execution: a reused provider session id can stall behind an earlier in-flight request
+            sessionId: `eval:${agent.name}:${c.name}:${Date.now()}`,
+          }),
+          this.deps.caseTimeoutMs ?? CASE_TIMEOUT_MS,
+        );
+      let outcome: Awaited<ReturnType<typeof attempt>> | undefined;
+      for (let n = 1; !outcome; n++) {
+        try {
+          outcome = await attempt();
+        } catch (e) {
+          if (n >= CASE_ATTEMPTS) throw e;
+        }
+      }
       const findings = outcome.review.findings;
       const score = scoreCase({
         expected,

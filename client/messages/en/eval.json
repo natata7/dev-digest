@@ -127,6 +127,7 @@
     "identical": "The system prompts are identical — any metric change comes from the model or the cases.",
     "close": "Close",
     "loading": "Loading comparison…",
-    "failed": "Could not load this comparison"
+    "failed": "Could not load this comparison",
+    "unchanged": "… {count, plural, one {# unchanged line} other {# unchanged lines}} …"
   }
 }

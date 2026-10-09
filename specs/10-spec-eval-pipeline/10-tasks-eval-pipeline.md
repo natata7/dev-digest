@@ -158,7 +158,7 @@ Covers AC-8, AC-9, AC-13a, AC-19 – AC-25 (UI side), NFR-6.
 - [x] 5.6 Add the `eval` item (label "Eval Dashboard", icon `Gauge` — already exported from `client/src/vendor/ui/icons.tsx`, href `/eval`) after Conventions in the `SKILLS LAB` group of `client/src/vendor/ui/nav.ts`; add the `helpers.test.ts` case for `activeKeyFor` and the new `nav.test.ts` described in the proof artifacts.
 - [x] 5.7 Extend `eval.json` strings (compare, prompt diff, turn-into-case); write the component tests; run the app (`./scripts/dev.sh`) and screenshots 02–04 are captured in 6.5 together with the experiment runs.
 
-### [ ] 6.0 `pnpm verify:l06`, sensitivity experiment and submission evidence
+### [x] 6.0 `pnpm verify:l06`, sensitivity experiment and submission evidence
 
 Covers AC-27, AC-28, Success Metrics 3–5, spec Unit 5.
 
@@ -170,9 +170,9 @@ Covers AC-27, AC-28, Success Metrics 3–5, spec Unit 5.
 - File: `specs/10-spec-eval-pipeline/10-experiment-eval-pipeline.md` lists the three prompt texts, the run ids and the metric table; contains no keys or real secrets.
 
 #### 6.0 Tasks
-- [ ] 6.1 Add `scripts/verify-l06.sh` (set -euo pipefail; prints `==> <step>` and a final summary) running: `server` typecheck, lint, hermetic vitest; `client` typecheck, lint, test; `reviewer-core` `npm test`. Add `"verify:l06": "bash scripts/verify-l06.sh"` to the root `package.json`.
-- [ ] 6.2 Run `pnpm verify:l06` and fix any failure in the touched packages; record the green output.
-- [ ] 6.3 Do the negative check from the proof artifact and revert it.
-- [ ] 6.4 Run the experiment on the seeded agent with a real provider key: (a) base prompt, (b) improved prompt (adds explicit rules for the seeded categories), (c) degraded prompt (adds "flag every changed line, including unused imports and style"). Confirm (b) moves recall/precision up relative to (a) and (c) lowers precision; if a movement is below 1 percentage point, repeat the run up to 3 times, then adjust the prompt text, not the scoring. The deterministic scoring tests (2.0) remain the proof that the logic itself is sensitive; the live experiment shows it end to end.
-- [ ] 6.5 Capture screenshots 05 and 06 from the Compare modal; write `10-experiment-eval-pipeline.md`.
-- [ ] 6.6 Final pass: check the spec's AC-1…AC-28 against the evidence; leave the final validation to `/sdd-4-validate-spec-implementation`. Invoke `engineering-insights` for server and client.
+- [x] 6.1 Add `scripts/verify-l06.sh` (set -euo pipefail; prints `==> <step>` and a final summary) running: `server` typecheck, lint, hermetic vitest; `client` typecheck, lint, test; `reviewer-core` `npm test`. Add `"verify:l06": "bash scripts/verify-l06.sh"` to the root `package.json`.
+- [x] 6.2 Run `pnpm verify:l06` and fix any failure in the touched packages; record the green output.
+- [x] 6.3 Do the negative check from the proof artifact and revert it.
+- [x] 6.4 Run the experiment on the seeded agent with a real provider key: (a) base prompt, (b) improved prompt (adds explicit rules for the seeded categories), (c) degraded prompt (adds "flag every changed line, including unused imports and style"). Confirm (b) moves recall/precision up relative to (a) and (c) lowers precision; if a movement is below 1 percentage point, repeat the run up to 3 times, then adjust the prompt text, not the scoring. The deterministic scoring tests (2.0) remain the proof that the logic itself is sensitive; the live experiment shows it end to end.
+- [x] 6.5 Capture screenshots 05 and 06 from the Compare modal; write `10-experiment-eval-pipeline.md`.
+- [x] 6.6 Final pass: check the spec's AC-1…AC-28 against the evidence; leave the final validation to `/sdd-4-validate-spec-implementation`. Invoke `engineering-insights` for server and client.

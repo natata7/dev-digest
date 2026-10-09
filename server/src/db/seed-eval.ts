@@ -6,7 +6,8 @@ import * as t from './schema.js';
  * Gold set for the built-in Security Reviewer (eval pipeline demo).
  * Diffs are tiny and self-contained; every expected range sits on a line that
  * is inside the diff (added or context), so the grounding gate can accept it.
- * Secrets below are obviously fake placeholders.
+ * Secrets below are obviously fake placeholders. Ranges span the changed line plus its
+ * neighbours: models are often off by a line, and a human marking a finding would too.
  */
 interface SeedCase {
   name: string;
@@ -27,17 +28,17 @@ export const EVAL_SEED_CASES: SeedCase[] = [
   {
     name: 'stripe-key-leak', title: 'Hardcoded Stripe secret key', file: 'src/config.ts', start: 10,
     lines: [' export const config = {', '   port: Number(process.env.PORT ?? 3000),', '+  stripeKey: "sk_live_REDACTED_DEMO",', '   redisUrl: process.env.REDIS_URL,', ' };'],
-    at: [2, 2], kind: 'must_find', severity: 'CRITICAL', category: 'security',
+    at: [1, 3], kind: 'must_find', severity: 'CRITICAL', category: 'security',
   },
   {
     name: 'ssrf-webhook', title: 'SSRF: user-controlled webhook URL', file: 'src/api/public/webhooks.ts', start: 58,
     lines: [' app.post("/webhooks/forward", async (req, reply) => {', '+  const target = String(req.body.url);', '+  const res = await fetch(target, { method: "POST", body: JSON.stringify(req.body.event) });', '+  return reply.send({ status: res.status });', ' });'],
-    at: [1, 2], kind: 'must_find', severity: 'CRITICAL', category: 'security',
+    at: [1, 3], kind: 'must_find', severity: 'CRITICAL', category: 'security',
   },
   {
     name: 'sql-injection-user-search', title: 'SQL injection in user search', file: 'src/api/users.ts', start: 40,
     lines: [' export async function searchUsers(db: Db, term: string) {', '+  const rows = await db.query(`SELECT * FROM users WHERE name LIKE \'%${term}%\'`);', '+  return rows;', ' }'],
-    at: [1, 1], kind: 'must_find', severity: 'CRITICAL', category: 'security',
+    at: [0, 2], kind: 'must_find', severity: 'CRITICAL', category: 'security',
   },
   {
     name: 'missing-authz-admin-delete', title: 'Admin route without authorization check', file: 'src/api/admin.ts', start: 12,
@@ -52,22 +53,22 @@ export const EVAL_SEED_CASES: SeedCase[] = [
   {
     name: 'jwt-accepts-none-algorithm', title: 'JWT verification accepts the "none" algorithm', file: 'src/auth/jwt.ts', start: 8,
     lines: [' export function verify(token: string) {', '+  return jwt.verify(token, SECRET, { algorithms: ["none", "HS256"] });', ' }'],
-    at: [1, 1], kind: 'must_find', severity: 'CRITICAL', category: 'security',
+    at: [0, 2], kind: 'must_find', severity: 'CRITICAL', category: 'security',
   },
   {
     name: 'missing-retry-after', title: 'Retry-After header omitted on 429', file: 'src/middleware/ratelimit.ts', start: 48,
     lines: [' if (bucket.tokens < 1) {', '+  return res.status(429).json({ error: "rate_limited" });', ' }', ' bucket.tokens -= 1;'],
-    at: [1, 1], kind: 'must_find', severity: 'WARNING', category: 'bug',
+    at: [0, 2], kind: 'must_find', severity: 'WARNING', category: 'bug',
   },
   {
     name: 'unused-import-noise', title: 'Unused import', file: 'src/utils/format.ts', start: 1,
     lines: ['+import { readFileSync } from "node:fs";', ' import { pad } from "./pad";', ' export const money = (n: number) => pad(n.toFixed(2));'],
-    at: [0, 0], kind: 'must_not_flag', severity: 'SUGGESTION', category: 'style',
+    at: [0, 1], kind: 'must_not_flag', severity: 'SUGGESTION', category: 'style',
   },
   {
     name: 'test-fixture-dummy-key', title: 'Dummy API key in a test fixture', file: 'src/__tests__/fixtures.ts', start: 3,
     lines: [' export const fixtures = {', '+  apiKey: "test-key-not-a-real-secret",', '+  baseUrl: "http://localhost:0",', ' };'],
-    at: [1, 1], kind: 'must_not_flag', severity: 'WARNING', category: 'security',
+    at: [1, 2], kind: 'must_not_flag', severity: 'WARNING', category: 'security',
   },
   {
     name: 'clean-refactor-no-flags', title: 'Pure refactor', file: 'src/utils/total.ts', start: 5,

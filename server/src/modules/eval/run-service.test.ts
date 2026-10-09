@@ -19,7 +19,7 @@ const finding = (file: string, s: number, e = s) => ({ id: 'x', severity: 'WARNI
 const outcome = (findings: ReturnType<typeof finding>[], dropped = 0, costUsd: number | null = 0.01) =>
   ({ review: { verdict: 'comment', summary: '', score: 50, findings }, dropped: Array.from({ length: dropped }, () => ({})), costUsd }) as never;
 
-function build(cases: EvalCaseRow[], review: (a: Record<string, unknown>) => Promise<unknown>, opts: { llm?: () => Promise<unknown>; agent?: unknown } = {}) {
+function build(cases: EvalCaseRow[], review: (a: Record<string, unknown>) => Promise<unknown>, opts: { llm?: () => Promise<unknown>; agent?: unknown; caseTimeoutMs?: number } = {}) {
   const saved: { run?: InsertAgentRun; cases?: InsertCaseRun[] } = {};
   const repo = {
     getAgent: async () => (opts.agent === null ? undefined : AGENT),
@@ -35,7 +35,7 @@ function build(cases: EvalCaseRow[], review: (a: Record<string, unknown>) => Pro
     llm: opts.llm ?? (async () => ({ id: 'openrouter' })),
     agentsRepo: { linkedSkills: async () => [] },
   } as unknown as Container;
-  return { service: new EvalService(container, repo, { review: review as never }), saved };
+  return { service: new EvalService(container, repo, { review: review as never, caseTimeoutMs: opts.caseTimeoutMs }), saved };
 }
 
 describe('EvalService.runAgent', () => {
@@ -118,5 +118,23 @@ describe('EvalService.runAgent', () => {
     await service.runAgent(WS, 'a1', ['id-b']);
     expect(calls).toHaveLength(1);
     expect(saved.run!.tracesTotal).toBe(1);
+  });
+
+  it('retries a stalled case once and scores it; two stalls become an error', async () => {
+    let calls = 0;
+    const stalls = build([caseRow('a', 'must_find', ['a.ts', 1, 1])], async () => {
+      calls++;
+      if (calls === 1) return new Promise(() => {}); // first attempt hangs forever
+      return outcome([finding('a.ts', 1)]);
+    }, { caseTimeoutMs: 20 });
+    const ok = await stalls.service.runAgent(WS, 'a1');
+    expect(calls).toBe(2);
+    expect(ok.recall).toBe(1);
+
+    const dead = build([caseRow('a', 'none')], () => new Promise(() => {}), { caseTimeoutMs: 20 });
+    const bad = await dead.service.runAgent(WS, 'a1');
+    expect(dead.saved.cases![0]).toMatchObject({ status: 'error' });
+    expect((dead.saved.cases![0]!.actualOutput as { error: string }).error).toContain('timed out');
+    expect(bad.traces_total).toBe(1);
   });
 });

@@ -18,8 +18,10 @@ export function deltaPts(d: number | null | undefined): DeltaView | null {
   return pts > 0 ? { text: `▲ ${pts}pt`, tone: "up" } : { text: `▼ ${Math.abs(pts)}pt`, tone: "down" };
 }
 
+/** Cents-level precision for normal sums; 4 decimals below $0.01 so a cheap run isn't shown as "$0.00". */
 export function money(n: number | null | undefined): string {
-  return n == null ? "—" : `$${n.toFixed(2)}`;
+  if (n == null) return "—";
+  return `$${n.toFixed(n > 0 && n < 0.01 ? 4 : 2)}`;
 }
 
 /** milliseconds → "1.8s" (or "—"). */

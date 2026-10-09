@@ -16,6 +16,8 @@ describe("eval-metrics helpers", () => {
   it("formats cost and duration", () => {
     expect(money(0.2345)).toBe("$0.23");
     expect(money(null)).toBe("—");
+    expect(money(0.003005)).toBe("$0.0030");
+    expect(money(0)).toBe("$0.00");
     expect(seconds(1800)).toBe("1.8s");
   });
 });
