@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Deterministic data collector for the dependencies-checker skill.
+// Deterministic data collector for the dependency-checker skill.
 // Usage: node collect.mjs [repoRoot]   → JSON on stdout. No network, no installs.
 import fs from 'node:fs';
 import path from 'node:path';

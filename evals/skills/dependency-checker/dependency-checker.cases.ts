@@ -29,13 +29,27 @@ client/node_modules/zod: 1.9M
 reviewer-core/node_modules/zod: 2.1M
 e2e/node_modules/playwright: 210M
 
-server/package.json also declares zod@3.23.8, client/package.json declares zod@3.22.4, reviewer-core/package.json declares zod@3.23.8 — three different resolved zod versions across packages.
+server/package.json also declares zod@3.23.8, client/package.json declares zod@3.22.4, reviewer-core/package.json declares zod@3.23.8 — two different zod versions across packages: 3.23.8 (server, reviewer-core) vs 3.22.4 (client).
 
 grep for imports crossing package boundaries:
 - server/src/routes/reviews.ts imports types from "@shared/review-types" (alias to server/src/vendor/shared)
 - server/src/services/review-service.ts imports "reviewer-core/src/pipeline.js" directly by relative path (not via the package's public entry point)
 - client/src/lib/api-types.ts imports "@shared/review-types" (same alias as server)
 - grep found no import of "moment" anywhere under server/src — only present in package.json`;
+
+const HIDDEN_ISSUES_DATA = `Data already collected — produce the answer directly from it, do not ask for tools.
+
+server/package.json dependencies: fastify@5.1.0, pg@8.13.0, typescript@5.6.3, vitest@2.1.4, @types/node@22.9.0
+server/package.json devDependencies: tsx@4.19.0
+client/package.json dependencies: next@15.0.3, react@19.0.0, moment@2.30.1, date-fns@4.1.0
+Installed sizes: server/node_modules/typescript 23M, vitest 2.8M, fastify 6.5M, pg 3.8M; client/node_modules/moment 4.2M, date-fns 22M, next 132M
+
+grep results:
+- server/src: imports "fastify" in app.ts, "pg" in db.ts; no imports of "typescript" or "vitest" outside *.test.ts files and vitest.config.ts
+- server/package.json scripts: "dev": "tsx watch src/index.ts", "test": "vitest run", "build": "tsc"
+- client/src/lib/format-date.ts imports "moment"
+- client/src/components/Timeline.tsx imports "date-fns"
+`;
 
 export const cases: SkillCase[] = [
   {
@@ -72,12 +86,38 @@ export const cases: SkillCase[] = [
     prompt: `We suspect some npm dependencies in server/ and client/ are unused or duplicated across packages with different versions. Check our dependencies and tell me what to prioritize fixing first.\n\n${REPO_DATA}`,
     practices: [
       "findings are explicitly labeled with one of the defined severity tiers (P0, P1, P2, or Info) rather than left unranked",
-      "the three different zod versions across server, client, and reviewer-core are called out explicitly as version drift",
+      "client declaring zod 3.22.4 while server and reviewer-core declare 3.23.8 is called out explicitly as version drift",
       "moment being declared in server/package.json but never imported anywhere under server/src is called out explicitly as an unused dependency",
       "each recommendation names a specific package name and package.json/file location (e.g. server/package.json, moment, zod) rather than a generic suggestion",
       "removing a dependency (e.g. moment) is presented as a recommendation for the user to confirm, not something already executed",
     ],
     threshold: 0.6,
+    maxTurns: 10,
+  },
+  // --- Analysis-quality cases: no format hints in the prompt, so these measure the quality of
+  // the analysis itself (the raw model can't win just by knowing the house report format).
+  {
+    name: "finds misplaced dependencies without being told where to look",
+    kind: "quality",
+    prompt: `Review the dependencies of our server package and tell me what is wrong with how they are declared.\n\n${HIDDEN_ISSUES_DATA}`,
+    practices: [
+      "typescript and vitest being declared under server dependencies (runtime) instead of devDependencies is called out as misplaced",
+      "@types/node being declared under dependencies instead of devDependencies is called out as misplaced",
+      "the answer does not flag fastify or pg as misplaced, since both are imported at runtime in server/src",
+    ],
+    threshold: 0.66,
+    maxTurns: 10,
+  },
+  {
+    name: "detects two libraries doing the same job in one package",
+    kind: "quality",
+    prompt: `Which dependencies in the client package overlap or can be consolidated? Be specific.\n\n${HIDDEN_ISSUES_DATA}`,
+    practices: [
+      "moment and date-fns are identified as two libraries serving the same date-handling role in client",
+      "the answer recommends consolidating on a single date library (either one is acceptable) and gives a reason, such as lower installed size, tree-shaking, or moment being in maintenance mode",
+      "the answer names the files that import each library (client/src/lib/format-date.ts for moment, client/src/components/Timeline.tsx for date-fns) so the migration scope is concrete",
+    ],
+    threshold: 0.66,
     maxTurns: 10,
   },
 ];
