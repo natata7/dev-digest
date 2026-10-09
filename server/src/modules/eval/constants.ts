@@ -14,3 +14,5 @@ export const RUNS_LIMIT = 30;
 export const RECENT_RUNS_LIMIT = 12;
 /** Points in a per-agent sparkline. */
 export const SPARK_POINTS = 8;
+/** Cases reviewed in parallel during a run. */
+export const CASE_CONCURRENCY = 4;

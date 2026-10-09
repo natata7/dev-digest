@@ -118,7 +118,7 @@ Covers AC-1 – AC-7, E8, E9, E12, NFR-4 (secret masking).
 - [x] 3.5 Add the button to `FindingCard.tsx` after "Learn" (icon from `@devdigest/ui`, text label), with `pending` handling that prevents double submit, a confirmation toast "Case created" / "Case already exists", and a type picker shown only for undecided findings (D2). Wire it through the PR page's findings list.
 - [x] 3.6 Add strings to the messages files; write the service, route (integration) and FindingCard tests. Screenshot `01-finding-card.png` is captured in the consolidated pass in 6.5 (needs the running app).
 
-### [ ] 4.0 Agent eval run: `POST /agents/:id/eval-runs`, history, compare, dashboard API, ≥ 8 seeded cases
+### [x] 4.0 Agent eval run: `POST /agents/:id/eval-runs`, history, compare, dashboard API, ≥ 8 seeded cases
 
 Covers AC-8 – AC-13a, AC-19 – AC-25 (API side), AC-26, E7, E11, NFR-2, NFR-3.
 
@@ -129,13 +129,13 @@ Covers AC-8 – AC-13a, AC-19 – AC-25 (API side), AC-26, E7, E11, NFR-2, NFR-3
 - CLI: with the API running, `cd server && pnpm db:seed && ID=$(curl -s localhost:3001/agents | jq -r '.[]|select(.name=="Security Reviewer")|.id') && curl -s localhost:3001/agents/$ID/eval-cases | jq 'length'` prints a number ≥ 8.
 
 #### 4.0 Tasks
-- [ ] 4.1 CRUD for cases in routes/service/repository: `GET /agents/:id/eval-cases` (with last-run status), `POST /agents/:id/eval-cases`, `PUT /eval-cases/:id`, `DELETE /eval-cases/:id`; validate `expected_output` through the normalizer; enforce limits from `constants.ts` (≤ 200 cases, ≤ 20 KB fragment).
-- [ ] 4.2 Implement `EvalService.runAgent(workspaceId, agentId, caseIds?)`: load the agent (prompt, model, skills, strategy) with the same resolution used by `ReviewRunExecutor`; reject empty sets and a missing provider before creating anything; guard against concurrent runs per agent (in-process lock, noted as the known ceiling).
-- [ ] 4.3 For each case: parse `input_diff` with `parseUnifiedDiff`, call `reviewPullRequest` with the agent's prompt and **only** the case's stored inputs (no intent, no repo-intel, no live PR data), with a per-case timeout; collect `review.findings` (grounded) and `dropped`; on error record the case as `error` and continue.
-- [ ] 4.4 Call the pure `scoreCase`/`aggregate` from task 2.0 and persist, in one transaction, the `eval_agent_runs` row (prompt + version snapshot, metrics, cost, duration) and one `eval_runs` row per case (`actual_output` with findings, dropped and counters, `pass`, `status`).
-- [ ] 4.5 Add routes: `POST /agents/:id/eval-runs` (body `RunEvalsInput`, response `EvalAgentRun`), `GET /agents/:id/eval-runs`, `GET /eval-runs/compare`, `GET /eval/dashboard` (all agents + recent runs) and `GET /agents/:id/eval-dashboard` (3 metrics + delta vs previous run, trend, runs, alert when any metric dropped).
-- [ ] 4.6 Seed ≥ 8 deterministic cases for the built-in Security Reviewer in `seed.ts` (stripe key leak, SSRF webhook, SQL injection, missing authz check, lethal-trifecta, a `must_not_flag` unused-import case, a `must_not_flag` test-fixture-secret case, a clean refactor); guard with the existing "insert if missing by name" pattern; fake secrets are obviously fake and masked.
-- [ ] 4.7 Write the service run tests (stubbed provider via `adapters/mocks.ts` patterns), the integration route tests and `seed-eval.test.ts`.
+- [x] 4.1 CRUD for cases in routes/service/repository: `GET /agents/:id/eval-cases` (with last-run status), `POST /agents/:id/eval-cases`, `PUT /eval-cases/:id`, `DELETE /eval-cases/:id`; validate `expected_output` through the normalizer; enforce limits from `constants.ts` (≤ 200 cases, ≤ 20 KB fragment).
+- [x] 4.2 Implement `EvalService.runAgent(workspaceId, agentId, caseIds?)`: load the agent (prompt, model, skills, strategy) with the same resolution used by `ReviewRunExecutor`; reject empty sets and a missing provider before creating anything; guard against concurrent runs per agent (in-process lock, noted as the known ceiling).
+- [x] 4.3 For each case: parse `input_diff` with `parseUnifiedDiff`, call `reviewPullRequest` with the agent's prompt and **only** the case's stored inputs (no intent, no repo-intel, no live PR data), with a per-case timeout; collect `review.findings` (grounded) and `dropped`; on error record the case as `error` and continue.
+- [x] 4.4 Call the pure `scoreCase`/`aggregate` from task 2.0 and persist, in one transaction, the `eval_agent_runs` row (prompt + version snapshot, metrics, cost, duration) and one `eval_runs` row per case (`actual_output` with findings, dropped and counters, `pass`, `status`).
+- [x] 4.5 Add routes: `POST /agents/:id/eval-runs` (body `RunEvalsInput`, response `EvalAgentRun`), `GET /agents/:id/eval-runs`, `GET /eval-runs/compare`, `GET /eval/dashboard` (all agents + recent runs) and `GET /agents/:id/eval-dashboard` (3 metrics + delta vs previous run, trend, runs, alert when any metric dropped).
+- [x] 4.6 Seed ≥ 8 deterministic cases for the built-in Security Reviewer in `seed.ts` (stripe key leak, SSRF webhook, SQL injection, missing authz check, lethal-trifecta, a `must_not_flag` unused-import case, a `must_not_flag` test-fixture-secret case, a clean refactor); guard with the existing "insert if missing by name" pattern; fake secrets are obviously fake and masked.
+- [x] 4.7 Write the service run tests (stubbed provider via `adapters/mocks.ts` patterns), the integration route tests and `seed-eval.test.ts`.
 
 ### [ ] 5.0 Client UI: Evals tab, Eval Dashboard page, sidebar entry, Compare modal
 

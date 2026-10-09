@@ -1,6 +1,12 @@
 import { EvalExpectedShape, normalizeExpectedOutput } from '@devdigest/shared';
-import type { EvalCaseRecord, EvalExpectationKind } from '@devdigest/shared';
-import type { EvalCaseRow, EvalCaseRunRow } from './repository.js';
+import type {
+  EvalAgentRun,
+  EvalAgentRunCase,
+  EvalCaseRecord,
+  EvalExpectationKind,
+  EvalMetricDelta,
+} from '@devdigest/shared';
+import type { EvalAgentRunRow, EvalCaseRow, EvalCaseRunRow } from './repository.js';
 import type { Loc } from './scoring.js';
 
 /** Mask secret-looking values so an eval set never becomes a secrets store. Line count is preserved. */
@@ -122,4 +128,70 @@ export function toCaseRecord(row: EvalCaseRow, last?: EvalCaseRunRow): EvalCaseR
     notes: row.notes ?? null,
     last_run: last ? { pass: last.pass, status: last.status, ran_at: last.ranAt.toISOString() } : null,
   };
+}
+
+// ---- agent runs: DTO mapping, deltas, alert -------------------------------
+
+export function toAgentRunDto(
+  row: EvalAgentRunRow,
+  agentName?: string | null,
+  perCase: Array<{ run: EvalCaseRunRow; caseName: string }> = [],
+): EvalAgentRun {
+  return {
+    id: row.id,
+    agent_id: row.agentId,
+    agent_name: agentName ?? null,
+    agent_version: row.agentVersion,
+    system_prompt: row.systemPrompt,
+    model: row.model,
+    ran_at: row.ranAt.toISOString(),
+    recall: row.recall,
+    precision: row.precision,
+    citation_accuracy: row.citationAccuracy,
+    traces_passed: row.tracesPassed,
+    traces_total: row.tracesTotal,
+    duration_ms: row.durationMs,
+    cost_usd: row.costUsd == null ? null : Number(row.costUsd),
+    per_case: perCase.map(({ run, caseName }): EvalAgentRunCase => {
+      const out = (run.actualOutput ?? {}) as { expected?: unknown; error?: string };
+      return {
+        case_id: run.caseId,
+        case_name: caseName,
+        status: run.status,
+        pass: run.pass,
+        expected: parseExpected(out.expected),
+        actual: run.actualOutput,
+        error: out.error ?? null,
+      };
+    }),
+  };
+}
+
+const sub = (b: number | null, a: number | null) => (b == null || a == null ? null : b - a);
+
+/** b − a for each metric (`null` when either side is undefined). */
+export function metricDelta(a: EvalAgentRun, b: EvalAgentRun): EvalMetricDelta {
+  return {
+    recall: sub(b.recall, a.recall),
+    precision: sub(b.precision, a.precision),
+    citation_accuracy: sub(b.citation_accuracy, a.citation_accuracy),
+    cost_usd: sub(b.cost_usd, a.cost_usd),
+  };
+}
+
+const DROP_EPSILON = 0.005; // half a percentage point
+
+/** "Precision dipped 2pts on v7 (vs v6)" for each metric that fell; null when nothing dropped. */
+export function regressionAlert(cur: EvalAgentRun, prev: EvalAgentRun | undefined): string | null {
+  if (!prev) return null;
+  const d = metricDelta(prev, cur);
+  const names: Array<[string, number | null]> = [
+    ['Recall', d.recall],
+    ['Precision', d.precision],
+    ['Citation accuracy', d.citation_accuracy],
+  ];
+  const drops = names
+    .filter((n): n is [string, number] => n[1] != null && n[1] <= -DROP_EPSILON)
+    .map(([name, v]) => `${name} dipped ${Math.round(Math.abs(v) * 100)}pts`);
+  return drops.length ? `${drops.join(', ')} on v${cur.agent_version} (vs v${prev.agent_version})` : null;
 }
