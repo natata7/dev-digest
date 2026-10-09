@@ -32,6 +32,8 @@ export function FindingCard({
   repoFullName,
   repoProvider,
   headSha,
+  onTurnIntoEval,
+  evalStatus = "idle",
 }: {
   f: FindingRecord;
   focused?: boolean;
@@ -41,9 +43,13 @@ export function FindingCard({
   repoFullName?: string | null;
   repoProvider?: RepoProvider;
   headSha?: string | null;
+  /** Create an eval case from this finding. `expectation` is only sent for undecided findings. */
+  onTurnIntoEval?: (expectation?: "must_find" | "must_not_flag") => void;
+  evalStatus?: "idle" | "pending" | "created" | "exists";
 }) {
   const t = useTranslations("prReview");
   const [expanded, setExpanded] = React.useState(defaultExpanded ?? false);
+  const [picking, setPicking] = React.useState(false);
   const sevColor = SEV_COLOR[f.severity] ?? SEV_COLOR_FALLBACK;
   const fileHref =
     repoFullName && headSha
@@ -52,6 +58,18 @@ export function FindingCard({
   const accepted = !!f.accepted_at;
   const dismissed = !!f.dismissed_at;
   const muted = accepted || dismissed;
+  const decided = accepted || dismissed;
+  const evalDone = evalStatus === "created" || evalStatus === "exists";
+  const evalBusy = evalStatus === "pending" || !!pending;
+  const startEval = () => {
+    if (evalBusy || evalDone) return;
+    if (decided) onTurnIntoEval?.();
+    else setPicking((p) => !p);
+  };
+  const pick = (expectation: "must_find" | "must_not_flag") => {
+    setPicking(false);
+    onTurnIntoEval?.(expectation);
+  };
 
   return (
     <div data-finding-id={f.id} style={s.card(!!focused, sevColor, muted)}>
@@ -111,6 +129,31 @@ export function FindingCard({
             >
               {t("finding.dismiss")}
             </Button>
+            {onTurnIntoEval && (
+              <Button
+                kind="ghost"
+                size="sm"
+                icon="FlaskConical"
+                disabled={evalBusy || evalDone}
+                onClick={startEval}
+              >
+                {evalStatus === "created"
+                  ? t("finding.evalCreated")
+                  : evalStatus === "exists"
+                    ? t("finding.evalExists")
+                    : t("finding.turnIntoEval")}
+              </Button>
+            )}
+            {picking && (
+              <>
+                <Button kind="secondary" size="sm" onClick={() => pick("must_find")}>
+                  {t("finding.evalPickFind")}
+                </Button>
+                <Button kind="secondary" size="sm" onClick={() => pick("must_not_flag")}>
+                  {t("finding.evalPickNotFlag")}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}

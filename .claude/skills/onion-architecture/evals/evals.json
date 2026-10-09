@@ -1,0 +1,69 @@
+{
+  "skill_name": "onion-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "name": "review-pr-labels-module",
+      "prompt": "I just wrote a new `pr-labels` module for the DevDigest server (routes.ts, service.ts, repository.ts). Please review it for backend architecture problems before I open the PR. List each problem with file, what breaks, and the fix.",
+      "expected_output": "Three layering problems: GET route queries Drizzle directly; POST route holds the free-plan label-limit business rule; service.add takes a FastifyRequest.",
+      "files": [
+        "evals/fixtures/pr-labels"
+      ],
+      "assertions": [
+        "Flags that the GET /pulls/:prId/labels route in routes.ts queries Drizzle (db.select / prLabels) directly instead of going through the service/repository",
+        "Flags that the free-plan limit (plan === 'free' && existing.length >= 3) is a business rule living in routes.ts and should move into service.ts",
+        "Flags that service.ts imports FastifyRequest / takes `req` and should take plain typed parameters extracted by the route",
+        "Does NOT flag repository.ts as a violation (it correctly uses Drizzle as infrastructure)",
+        "Does NOT propose restructuring into horizontal src/domain, src/application, src/infrastructure folders"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "review-notifications-slack-adapter",
+      "prompt": "I added Slack notifications: an adapter in server/src/adapters/notify, a `notifications` service, and a small pure severity scorer in reviewer-core. Review these files for architecture problems and tell me where each thing should live instead.",
+      "expected_output": "Three problems: Notifier port defined next to SlackNotifier instead of @devdigest/shared; NotificationService news the concrete SlackNotifier and reads process.env instead of receiving the port via container.ts; reviewer-core/severity.ts reads the filesystem (impure core).",
+      "files": [
+        "evals/fixtures/notifications"
+      ],
+      "assertions": [
+        "Flags that the Notifier interface is defined inside adapters/notify/slack.ts next to its only implementation and should move to the shared ports file (@devdigest/shared adapters.ts)",
+        "Flags that NotificationService imports and instantiates the concrete SlackNotifier (and reads process.env.SLACK_TOKEN) instead of depending on the Notifier port injected via platform/container.ts",
+        "Flags that reviewer-core/src/severity.ts imports node:fs and reads a JSON file at module load, breaking reviewer-core's no-filesystem purity, with weights to be passed in or inlined as data",
+        "Mentions wiring the new adapter through platform/container.ts (with a ContainerOverrides entry for tests)",
+        "Does NOT suggest moving severity.ts out of reviewer-core into server"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "testability-reports-service",
+      "prompt": "I want to unit-test ReportService.generate (the confidence bucketing) quickly, without Postgres and without a GitHub token. Right now the only test is service.it.test.ts. What's wrong with this module's structure and what exactly should I change so a hermetic test is possible?",
+      "expected_output": "Three problems: service imports the global drizzle db; service constructs Octokit directly with process.env token; pure bucketing logic is buried in the I/O method so its test needs Postgres. Fix: repository + CodeHostClient port via container/ContainerOverrides, extract pure bucketing function, hermetic *.test.ts with stubs.",
+      "files": [
+        "evals/fixtures/reports"
+      ],
+      "assertions": [
+        "Flags that service.ts imports the global Drizzle `db` and queries tables directly, and says queries belong in a repository.ts injected into the service",
+        "Flags that service.ts does `new Octokit(...)` directly and says it should use the CodeHostClient port (from @devdigest/shared) wired through platform/container.ts",
+        "Identifies the confidence bucketing as pure domain logic that should be extracted into a pure function, testable with no stubs",
+        "Proposes a hermetic *.test.ts using stub/fake repo and port (e.g. via ContainerOverrides), keeping .it.test.ts only for the repository",
+        "Names the root cause as business logic being in the wrong layer, not merely 'mock the modules with vi.mock'"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "review-digests-cross-module",
+      "prompt": "I built a `digests` module that builds a ranked summary of a review's findings and posts it to the PR. Files are in the fixture: routes, service, repository, a formatter, the shared ports file, and the container. Do a full architecture review of the backend layering and boundaries, and tell me what to change for each problem.",
+      "expected_output": "Four problems: service imports reviews' repository (cross-module); repository.ts embeds the confidence threshold and priority ranking (business policy); CodeHostClient.getPull returns an Octokit type (port leaks SDK); routes.ts constructs repositories itself instead of using the container.",
+      "files": [
+        "evals/fixtures/digests"
+      ],
+      "assertions": [
+        "Flags that DigestService imports/depends on ReviewRepository from the reviews module and says to go through the reviews module's service (or a narrow port) instead of another module's repository",
+        "Flags that DigestRepository encodes business policy (confidence >= 0.7 threshold and severity-weighted priority ranking) in SQL and says the policy belongs in a pure domain function called by the service",
+        "Flags that the CodeHostClient.getPull port signature returns an Octokit RestEndpointMethodTypes type and says it should return a shared contract type mapped by the adapter",
+        "Flags that routes.ts instantiates DigestRepository/ReviewRepository/DigestService itself instead of the wiring living in platform/container.ts",
+        "Does NOT flag format.ts as a violation (it is correct pure logic)"
+      ]
+    }
+  ]
+}

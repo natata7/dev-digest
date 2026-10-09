@@ -13,6 +13,7 @@ import {
 } from './seed-prompts.js';
 import { seedSkills } from './seed-skills.js';
 import { seedBlastDemo } from './seed-blast.js';
+import { seedEvalCases } from './seed-eval.js';
 
 /** Default provider/model for the built-in reviewer agents. */
 export const DEFAULT_PROVIDER = 'openrouter' as const;
@@ -404,6 +405,7 @@ export async function seed(db: Db): Promise<{ workspaceId: string; userId: strin
 
   await seedSkills(db, workspaceId);
   await seedBlastDemo(db, repoId);
+  await seedEvalCases(db, workspaceId);
 
   return { workspaceId, userId };
 }

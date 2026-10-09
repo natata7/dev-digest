@@ -51,20 +51,20 @@ describe("A2 Agent Editor (smoke)", () => {
     expect(screen.getByText("Config")).toBeInTheDocument();
     expect(screen.getByText("Skills")).toBeInTheDocument();
     expect(screen.getByText("Context")).toBeInTheDocument();
-    expect(screen.queryByText("Evals")).not.toBeInTheDocument();
+    expect(screen.getByText("Evals")).toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
     expect(screen.queryByText("CI")).not.toBeInTheDocument();
     expect(screen.getByText("Configuration")).toBeInTheDocument();
     expect(screen.getByText("Save agent")).toBeInTheDocument();
   });
 
-  it("renders the Skills tab and no Evals/Stats/CI", () => {
+  it("renders the Skills tab, the Evals tab, and no Stats/CI", () => {
     renderWithIntl(<AgentEditor agent={AGENT} tab="skills" onTab={() => {}} />);
     expect(screen.getByText("Config")).toBeInTheDocument();
     expect(screen.getAllByText("Skills").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByPlaceholderText("Filter skills…")).toBeInTheDocument();
     expect(screen.getByText("Context")).toBeInTheDocument();
-    expect(screen.queryByText("Evals")).not.toBeInTheDocument();
+    expect(screen.getByText("Evals")).toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
     expect(screen.queryByText("CI")).not.toBeInTheDocument();
   });
