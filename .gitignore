@@ -24,3 +24,6 @@ test-results/
 
 # emdash worktree config (local)
 .emdash.json
+
+# skill eval run outputs (fixtures + evals.json stay tracked)
+.claude/skills/*-workspace/

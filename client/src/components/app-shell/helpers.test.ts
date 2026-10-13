@@ -29,3 +29,10 @@ describe("onboarding tour navigation", () => {
     expect(activeKeyFor("/onboarding/")).toBe("");
   });
 });
+
+describe("eval dashboard navigation", () => {
+  it("/eval and /eval/<agent> resolve to the eval nav key", () => {
+    expect(activeKeyFor("/eval")).toBe("eval");
+    expect(activeKeyFor("/eval/3b1f")).toBe("eval");
+  });
+});

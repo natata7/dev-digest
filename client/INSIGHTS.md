@@ -4,6 +4,10 @@ Read before starting work here; append before finishing — see [`engineering-in
 
 ## Pattern
 
+### 2026-10-09 — a runtime import from `@devdigest/shared` breaks the Next bundle; only `import type` works in the client
+`client/src/vendor/shared/index.ts` re-exports `./contracts/x.js` (NodeNext-style paths to `.ts` files). Vitest and `tsc` resolve that, but Next's webpack does not: importing a Zod schema as a value (e.g. `EvalExpectedOutput.safeParse` in the eval case editor) gave `Module not found: Can't resolve './contracts/findings.js'` and a 500 on the whole page, while every unit test and typecheck stayed green. Keep the client to type-only imports from `@devdigest/shared` and validate locally (the server normalizes anyway), or add a webpack `extensionAlias` in `next.config` if runtime schemas are ever needed. Found only by opening the page in the running app.
+
+
 ### 2026-09-19 — side preview next to a tall grid must fill AppFrame main, not grow with the list
 `AppFrame` (`client/src/vendor/ui/shell/AppFrame.tsx`) gives `<main>` `flex: 1; minHeight: 0; overflow: auto`. A `minHeight: calc(100vh - 52px)` flex row with `alignSelf: stretch` on the preview makes the panel as tall as the skill grid, so Open sinks below the fold and header buttons paint over the markdown. Use `height: "100%"` on the row, `overflow: "auto"` on the list column, `overflow: "hidden"` on the panel (`SkillsListView/styles.ts`, `SkillPreviewPanel/styles.ts`).
 

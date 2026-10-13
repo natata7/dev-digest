@@ -92,4 +92,53 @@ describe("FindingCard (smoke, both themes)", () => {
       "https://gitlab.com/acme/payments-api/-/blob/abc123/src/config.ts#L11",
     );
   });
+
+  describe("Turn into eval case", () => {
+    const accepted: FindingRecord = { ...FINDING, accepted_at: "2026-10-01T00:00:00Z" };
+
+    it("decided finding: one click sends one request with no expectation; a second click is ignored", () => {
+      const onTurnIntoEval = vi.fn();
+      const { rerender } = renderWithIntl(
+        <FindingCard f={accepted} defaultExpanded onTurnIntoEval={onTurnIntoEval} />,
+      );
+      fireEvent.click(screen.getByText("Turn into eval case"));
+      expect(onTurnIntoEval).toHaveBeenCalledTimes(1);
+      expect(onTurnIntoEval).toHaveBeenCalledWith();
+
+      rerender(
+        <NextIntlClientProvider locale="en" messages={{ prReview: messages }}>
+          <FindingCard f={accepted} defaultExpanded onTurnIntoEval={onTurnIntoEval} evalStatus="pending" />
+        </NextIntlClientProvider>,
+      );
+      fireEvent.click(screen.getByText("Turn into eval case"));
+      expect(onTurnIntoEval).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows a confirmation label once created, and when the case already existed", () => {
+      const { rerender } = renderWithIntl(
+        <FindingCard f={accepted} defaultExpanded onTurnIntoEval={() => {}} evalStatus="created" />,
+      );
+      expect(screen.getByText("Eval case created")).toBeInTheDocument();
+      rerender(
+        <NextIntlClientProvider locale="en" messages={{ prReview: messages }}>
+          <FindingCard f={accepted} defaultExpanded onTurnIntoEval={() => {}} evalStatus="exists" />
+        </NextIntlClientProvider>,
+      );
+      expect(screen.getByText("Eval case already exists")).toBeInTheDocument();
+    });
+
+    it("undecided finding: asks which expectation before creating", () => {
+      const onTurnIntoEval = vi.fn();
+      renderWithIntl(<FindingCard f={FINDING} defaultExpanded onTurnIntoEval={onTurnIntoEval} />);
+      fireEvent.click(screen.getByText("Turn into eval case"));
+      expect(onTurnIntoEval).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByText("Should not be flagged"));
+      expect(onTurnIntoEval).toHaveBeenCalledWith("must_not_flag");
+    });
+
+    it("renders no button when the handler is not provided", () => {
+      renderWithIntl(<FindingCard f={accepted} defaultExpanded />);
+      expect(screen.queryByText("Turn into eval case")).toBeNull();
+    });
+  });
 });

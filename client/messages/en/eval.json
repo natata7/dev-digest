@@ -28,7 +28,25 @@
       "cost": "Cost"
     },
     "pass": "pass",
-    "fail": "fail"
+    "fail": "fail",
+    "agentsHeading": "Agents",
+    "subtitle": "Regression harness across all reviewer agents · pick an agent to see its runs",
+    "runAllAgents": "Run all agents",
+    "recentAll": "Recent eval runs · all agents",
+    "lastRun": "Last run v{version} · {when} · {passed}/{total} pass",
+    "neverRun": "No runs yet",
+    "metricShortRecall": "RECALL",
+    "metricShortPrecision": "PREC",
+    "metricShortCitation": "CITE",
+    "allAgents": "All agents",
+    "agentSubtitle": "Regression harness · {runs, plural, one {# run} other {# runs}} on the {cases}-case gold set",
+    "recentHeading": "Recent runs",
+    "selected": "{count} selected",
+    "compare": "Compare",
+    "version": "Version",
+    "duration": "Duration",
+    "noAgents": "No agents yet.",
+    "loadFailed": "Could not load eval data"
   },
   "caseEditor": {
     "newCase": "New eval case",
@@ -55,7 +73,9 @@
     "invalidJson": "invalid JSON",
     "lastRunPassed": "Last run passed",
     "lastRunFailed": "Last run failed",
-    "resultSummary": "recall {recall}% · precision {precision}% · citation {citation}% · {duration}s"
+    "resultSummary": "recall {recall}% · precision {precision}% · citation {citation}% · {duration}s",
+    "subtitle": "Simulate a PR and assert the expected output",
+    "cancel": "Cancel"
   },
   "evalsTab": {
     "metricsTitle": "Eval metrics",
@@ -71,7 +91,20 @@
     "run": "Run",
     "running": "Running…",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "viewDashboard": "View full dashboard →",
+    "tracesPassed": "Traces passed",
+    "passing": "{pass} / {total} passing",
+    "runAll": "Run all evals",
+    "kindMustFind": "must find",
+    "kindMustNotFlag": "must not flag",
+    "kindNone": "empty []",
+    "historyHeading": "Run history",
+    "noRuns": "No runs yet — click “Run all evals”.",
+    "runFailedTitle": "Eval run failed",
+    "deleteConfirm": "Delete this eval case?",
+    "caseError": "error",
+    "versionShort": "v{version}"
   },
   "page": {
     "crumbSkillsLab": "Skills Lab",
@@ -80,5 +113,21 @@
     "crumbEvals": "Evals",
     "crumbNewCase": "New case",
     "crumbEvalCase": "Eval case"
+  },
+  "compare": {
+    "title": "Compare runs · v{a} → v{b}",
+    "subtitle": "Old prompt vs new — metric deltas and prompt diff on the {cases}-case gold set",
+    "recall": "RECALL",
+    "precision": "PRECISION",
+    "citation": "CITATION",
+    "cost": "COST",
+    "promptDiff": "System prompt diff",
+    "oldLabel": "v{version} (old)",
+    "newLabel": "v{version} (new)",
+    "identical": "The system prompts are identical — any metric change comes from the model or the cases.",
+    "close": "Close",
+    "loading": "Loading comparison…",
+    "failed": "Could not load this comparison",
+    "unchanged": "… {count, plural, one {# unchanged line} other {# unchanged lines}} …"
   }
 }
