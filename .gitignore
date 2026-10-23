@@ -27,3 +27,6 @@ test-results/
 
 # skill eval run outputs (fixtures + evals.json stay tracked)
 .claude/skills/*-workspace/
+
+# sdd-engineering plugin: local trace of the active plugin version
+.claude/sdd-engineering-trace.jsonl
